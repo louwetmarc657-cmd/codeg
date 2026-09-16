@@ -968,7 +968,21 @@
         "action": "Sign out",
         "done": "Signed out. Sign in again to pick a different account.",
         "failed": "Could not sign out"
-      }
+      },
+      "tempReclaimTitle": "Leftover temp space",
+      "tempReclaimHint": "Older versions of codeg could not clean up the temporary directory this agent unpacks on every launch. This scans the system temp folder for those leftovers. That folder is shared with other applications, so nothing is deleted until you confirm, and anything still in use is skipped.",
+      "tempReclaimScan": "Scan",
+      "tempReclaimDelete": "Delete leftovers",
+      "tempReclaimNone": "Nothing to reclaim.",
+      "tempReclaimFound": "{count} leftover item(s), {size} reclaimable.",
+      "tempReclaimSkipped": "{count} skipped (still in use or too recent).",
+      "tempReclaimed": "Reclaimed {size} from {count} item(s).",
+      "tempReclaimSelectAll": "Select all",
+      "tempReclaimAgeHours": "{hours}h",
+      "tempReclaimConfirmTitle": "Delete {count} item(s)?",
+      "tempReclaimConfirmBody": "This permanently deletes {size}. The system temp folder is shared with other applications, so check each path before confirming — anything still in use is skipped.",
+      "tempReclaimConfirmAction": "Delete",
+      "tempReclaimCancel": "Cancel"
     },
     "deepseek": {
       "configManagement": "DeepSeek Harness Configuration",
@@ -1176,6 +1190,46 @@
           "todowrite": "Write the todo list",
           "question": "Ask you a question",
           "doom_loop": "Trips when the same call repeats three times with identical input"
+        }
+      },
+      "behavior": {
+        "title": "Behavior & compaction",
+        "description": "Session defaults, context compaction and tool-output limits. Written to opencode.json and applied once you save below.",
+        "docsLink": "Config docs",
+        "unset": "Not configured",
+        "defaultAgent": "Default agent",
+        "defaultAgentHint": "Which primary agent a new session opens in. Falls back to build when empty or unknown.",
+        "share": "Sharing",
+        "shareHint": "How a session may be published to a share link.",
+        "shareManual": "Manual (on request)",
+        "shareAuto": "Automatic (every new session)",
+        "shareDisabled": "Disabled",
+        "autoUpdate": "Auto-update",
+        "autoUpdateHint": "Whether OpenCode updates itself to the latest release.",
+        "autoUpdateOn": "Update automatically",
+        "autoUpdateNotify": "Notify only",
+        "autoUpdateOff": "Never",
+        "snapshot": "Filesystem snapshots",
+        "snapshotHint": "Records a snapshot before each step. Turning it off means undo and revert can no longer restore files.",
+        "compactionAuto": "Auto-compaction",
+        "compactionAutoHint": "Summarize the conversation automatically when the context window fills up.",
+        "compactionPrune": "Prune old tool output",
+        "compactionPruneHint": "Drop the output of older tool calls during compaction instead of summarizing it.",
+        "fields": {
+          "subagentDepth": "Sub-agent depth",
+          "tailTurns": "Turns kept verbatim",
+          "preserveRecentTokens": "Tokens kept verbatim",
+          "reserved": "Reserved tokens",
+          "maxLines": "Tool output line limit",
+          "maxBytes": "Tool output byte limit"
+        },
+        "hints": {
+          "subagentDepth": "How deep sub-agents may nest. 1 stops a sub-agent from launching another.",
+          "tailTurns": "Most recent user turns kept uncompacted. Unset means only the token budget below limits them.",
+          "preserveRecentTokens": "Token budget of recent turns kept uncompacted after a compaction.",
+          "reserved": "Window left free so a compaction itself never overflows the context.",
+          "maxLines": "Output longer than this is written to disk and replaced with a preview. Default 2000.",
+          "maxBytes": "Output larger than this is written to disk and replaced with a preview. Default 51200."
         }
       }
     },
@@ -1447,7 +1501,11 @@
       "ready": "Adapter {adapterCmd} is installed — that is what Codeg launches. It ships its own runtime, so the {nativeLabel} is not required; install it later and the two coexist, sharing {configDir}."
     },
     "cline": {
-      "configDescription": "Configure Cline API provider and credentials. Settings are saved to ~/.cline/data/."
+      "configDescription": "Configure Cline API provider and credentials. Settings are saved to ~/.cline/data/.",
+      "signInGroup": "Sign in with Cline",
+      "byoGroup": "Bring your own provider",
+      "externalGroup": "Configured outside codeg",
+      "signInHint": "Cline holds this credential itself. Run the command below in a terminal to sign in — it prints a code and opens a browser page to confirm it."
     },
     "opencodePlugins": {
       "title": "OpenCode Plugins",
@@ -1455,7 +1513,10 @@
       "noPlugins": "No plugins declared.",
       "status": {
         "installed": "Installed",
-        "missing": "Missing"
+        "needs_migration": "Needs migration",
+        "missing": "Missing",
+        "path": "Path plugin",
+        "path_missing": "Path not found"
       },
       "installAll": "Install All Missing",
       "pinVersions": "Pin @latest Versions",
@@ -1586,9 +1647,57 @@
     "customAgentBadge": "Custom",
     "customAgentNotLaunchable": "This agent cannot launch here: {reason}"
   },
+  "AgentVocabulary": {
+    "deepseekModeDefault": "Normal",
+    "deepseekModeDefaultDescription": "Reads and edits files and runs commands directly to get the job done",
+    "deepseekModePlan": "Plan",
+    "deepseekModePlanDescription": "Investigates first and proposes a full plan for you to confirm before touching anything. This steers the model — the real boundary is still whatever File access allows.",
+    "deepseekOptionModel": "Model",
+    "deepseekOptionReasoning": "Reasoning effort",
+    "deepseekOptionReasoningDescription": "Higher is slower and costs more tokens, but steadier on hard problems",
+    "deepseekOptionSandbox": "File access",
+    "deepseekOptionSandboxDescription": "Commands and file tools share this one boundary",
+    "deepseekReasoningOff": "Off",
+    "deepseekReasoningOffDescription": "Answers directly with no reasoning; fastest",
+    "deepseekReasoningLow": "Low",
+    "deepseekReasoningLowDescription": "Reasons briefly; steadier than off, faster than high",
+    "deepseekReasoningHigh": "High",
+    "deepseekReasoningHighDescription": "Reasons before answering; the everyday coding default",
+    "deepseekReasoningMax": "Max",
+    "deepseekReasoningMaxDescription": "Reasons longer; steadier on hard problems, but slower and costs more tokens",
+    "deepseekSandboxReadOnly": "Read-only",
+    "deepseekSandboxReadOnlyDescription": "Runs under a read-only policy; switch access when a write is needed. Enforcement can be partial on some platforms.",
+    "deepseekSandboxWorkspaceWrite": "Workspace write",
+    "deepseekSandboxWorkspaceWriteDescription": "Writes are meant to stay inside the session workspace and the system temp directories; a call outside them asks for one-time approval. Enforcement can be partial on some platforms.",
+    "deepseekSandboxFullAccess": "Full access (no sandbox)",
+    "deepseekSandboxFullAccessDescription": "Applies no file restrictions at all. Choose it only when you understand the consequences.",
+    "deepseekPermissionAllowOnce": "Allow once",
+    "deepseekPermissionRejectOnce": "Reject"
+  },
   "SettingsPages": {
     "agentsLoading": "Loading agent settings...",
     "skillPacksLoading": "Loading skill packs…"
+  },
+  "CloseBehaviorSettings": {
+    "title": "Close Button Behavior",
+    "description": "Choose what the main window's close button does.",
+    "trayUnavailable": "This system has no usable tray, so the close button always exits codeg.",
+    "behaviorAsk": "Ask every time",
+    "behaviorMinimize": "Minimize to tray",
+    "behaviorExit": "Exit codeg",
+    "saveFailed": "Failed to save close behavior: {message}"
+  },
+  "CloseRequestDialog": {
+    "askTitle": "Close codeg?",
+    "askDescription": "codeg can keep running in the tray so agents and terminals stay alive, or exit completely.",
+    "confirmExitTitle": "Exit codeg?",
+    "confirmExitDescription": "Closing the window is set to exit codeg.",
+    "runningTerminals": "{count, plural, one {# terminal is still running and will be terminated on exit.} other {# terminals are still running and will be terminated on exit.}}",
+    "remember": "Remember my choice",
+    "cancel": "Cancel",
+    "minimize": "Minimize to tray",
+    "exit": "Exit codeg",
+    "actionFailed": "Action failed: {message}"
   },
   "GeneralSettings": {
     "loading": "Loading...",
@@ -2991,6 +3100,7 @@
         "searchModel": "Search models...",
         "searchModelAria": "Search models",
         "modelListLabel": "Models",
+        "recommendedBadge": "Recommended",
         "noModels": "No models found",
         "cancel": "Cancel",
         "send": "Send",
@@ -3264,6 +3374,7 @@
       "messageList": {
         "attachedResources": "Attached resources",
         "loading": "Loading...",
+        "loadBackgroundActivity": "Load background activity",
         "loadEarlier": "Load earlier messages",
         "loadingEarlier": "Loading earlier messages…",
         "error": "Error: {message}",

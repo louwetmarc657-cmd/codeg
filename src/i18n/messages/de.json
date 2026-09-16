@@ -968,7 +968,21 @@
         "action": "Abmelden",
         "done": "Abgemeldet. Melde dich erneut an, um ein anderes Konto zu wählen.",
         "failed": "Abmelden fehlgeschlagen"
-      }
+      },
+      "tempReclaimTitle": "Übrig gebliebener temporärer Speicher",
+      "tempReclaimHint": "Ältere codeg-Versionen konnten das temporäre Verzeichnis nicht aufräumen, das dieser Agent bei jedem Start entpackt. Hiermit wird der temporäre Systemordner nach diesen Überresten durchsucht. Dieser Ordner wird mit anderen Anwendungen geteilt, daher wird nichts gelöscht, bevor du bestätigst, und alles noch Verwendete wird übersprungen.",
+      "tempReclaimScan": "Suchen",
+      "tempReclaimDelete": "Überreste löschen",
+      "tempReclaimNone": "Nichts zurückzugewinnen.",
+      "tempReclaimFound": "{count} Überrest(e), {size} freigebbar.",
+      "tempReclaimSkipped": "{count} übersprungen (noch in Verwendung oder zu neu).",
+      "tempReclaimed": "{size} aus {count} Element(en) zurückgewonnen.",
+      "tempReclaimSelectAll": "Alle auswählen",
+      "tempReclaimAgeHours": "{hours} Std.",
+      "tempReclaimConfirmTitle": "{count} Element(e) löschen?",
+      "tempReclaimConfirmBody": "Damit werden {size} dauerhaft gelöscht. Der temporäre Systemordner wird von anderen Anwendungen mitbenutzt – prüfe daher jeden Pfad vor dem Bestätigen. Noch verwendete Einträge werden übersprungen.",
+      "tempReclaimConfirmAction": "Löschen",
+      "tempReclaimCancel": "Abbrechen"
     },
     "deepseek": {
       "configManagement": "DeepSeek-Harness-Konfiguration",
@@ -1176,6 +1190,46 @@
           "todowrite": "Die To-do-Liste schreiben",
           "question": "Dir eine Frage stellen",
           "doom_loop": "Löst aus, wenn sich derselbe Aufruf dreimal mit gleicher Eingabe wiederholt"
+        }
+      },
+      "behavior": {
+        "title": "Verhalten & Verdichtung",
+        "description": "Sitzungsvorgaben, Kontextverdichtung und Grenzwerte für Werkzeugausgaben. Wird in opencode.json geschrieben und mit dem Speichern unten übernommen.",
+        "docsLink": "Konfigurationsdoku",
+        "unset": "Nicht konfiguriert",
+        "defaultAgent": "Standard-Agent",
+        "defaultAgentHint": "Mit welchem Primär-Agenten eine neue Sitzung startet. Leer oder unbekannt fällt auf build zurück.",
+        "share": "Teilen",
+        "shareHint": "Ob eine Sitzung als Freigabelink veröffentlicht werden darf.",
+        "shareManual": "Manuell (nur auf Anfrage)",
+        "shareAuto": "Automatisch (jede neue Sitzung)",
+        "shareDisabled": "Deaktiviert",
+        "autoUpdate": "Automatische Updates",
+        "autoUpdateHint": "Ob OpenCode sich selbst auf die neueste Version aktualisiert.",
+        "autoUpdateOn": "Automatisch aktualisieren",
+        "autoUpdateNotify": "Nur benachrichtigen",
+        "autoUpdateOff": "Nie",
+        "snapshot": "Dateisystem-Snapshots",
+        "snapshotHint": "Legt vor jedem Schritt einen Snapshot an. Ausgeschaltet können Rückgängig und Zurücksetzen keine Dateien mehr wiederherstellen.",
+        "compactionAuto": "Automatische Verdichtung",
+        "compactionAutoHint": "Fasst das Gespräch automatisch zusammen, wenn das Kontextfenster voll wird.",
+        "compactionPrune": "Alte Werkzeugausgaben verwerfen",
+        "compactionPruneHint": "Verwirft beim Verdichten die Ausgaben älterer Werkzeugaufrufe, statt sie zusammenzufassen.",
+        "fields": {
+          "subagentDepth": "Subagenten-Tiefe",
+          "tailTurns": "Wörtlich behaltene Züge",
+          "preserveRecentTokens": "Wörtlich behaltene Tokens",
+          "reserved": "Reservierte Tokens",
+          "maxLines": "Zeilenlimit für Werkzeugausgaben",
+          "maxBytes": "Bytelimit für Werkzeugausgaben"
+        },
+        "hints": {
+          "subagentDepth": "Wie tief Subagenten verschachtelt sein dürfen. Bei 1 kann ein Subagent keinen weiteren starten.",
+          "tailTurns": "Wie viele jüngste Benutzerzüge unverdichtet bleiben. Ohne Wert begrenzt sie nur das Tokenbudget unten.",
+          "preserveRecentTokens": "Tokenbudget der jüngsten Züge, die nach einer Verdichtung wörtlich erhalten bleiben.",
+          "reserved": "Freigehaltenes Fenster, damit die Verdichtung selbst den Kontext nicht sprengt.",
+          "maxLines": "Längere Ausgaben werden auf die Festplatte geschrieben und durch eine Vorschau ersetzt. Standard 2000.",
+          "maxBytes": "Größere Ausgaben werden auf die Festplatte geschrieben und durch eine Vorschau ersetzt. Standard 51200."
         }
       }
     },
@@ -1447,7 +1501,11 @@
       "ready": "Der Adapter {adapterCmd} ist installiert — ihn startet Codeg. Er bringt seine eigene Laufzeit mit, die {nativeLabel} wird also nicht benötigt; installierst du sie später, koexistieren beide und teilen sich {configDir}."
     },
     "cline": {
-      "configDescription": "Konfigurieren Sie den Cline API-Anbieter und die Anmeldedaten. Einstellungen werden in ~/.cline/data/ gespeichert."
+      "configDescription": "Konfigurieren Sie den Cline API-Anbieter und die Anmeldedaten. Einstellungen werden in ~/.cline/data/ gespeichert.",
+      "signInGroup": "Mit Cline anmelden",
+      "byoGroup": "Eigenen Anbieter verwenden",
+      "externalGroup": "Außerhalb von codeg konfiguriert",
+      "signInHint": "Cline verwahrt diese Zugangsdaten selbst. Führe den Befehl unten in einem Terminal aus, um dich anzumelden – er zeigt einen Code an und öffnet eine Browserseite zur Bestätigung."
     },
     "opencodePlugins": {
       "title": "OpenCode-Plugins",
@@ -1455,7 +1513,10 @@
       "noPlugins": "Keine Plugins in opencode.json deklariert",
       "status": {
         "installed": "Installiert",
-        "missing": "Nicht installiert"
+        "needs_migration": "Migration erforderlich",
+        "missing": "Nicht installiert",
+        "path": "Pfad-Plugin",
+        "path_missing": "Pfad nicht gefunden"
       },
       "installAll": "Alle fehlenden installieren",
       "pinVersions": "@latest-Versionen fixieren",
@@ -1586,9 +1647,57 @@
     "customAgentBadge": "Eigen",
     "customAgentNotLaunchable": "Dieser Agent kann hier nicht gestartet werden: {reason}"
   },
+  "AgentVocabulary": {
+    "deepseekModeDefault": "Normal",
+    "deepseekModeDefaultDescription": "Liest und bearbeitet Dateien und führt Befehle direkt aus, um die Aufgabe zu erledigen",
+    "deepseekModePlan": "Plan",
+    "deepseekModePlanDescription": "Untersucht zuerst und legt einen vollständigen Plan zur Bestätigung vor, bevor etwas geändert wird. Das lenkt nur das Modell — die tatsächliche Grenze bestimmt weiterhin der Dateizugriff.",
+    "deepseekOptionModel": "Modell",
+    "deepseekOptionReasoning": "Denkaufwand",
+    "deepseekOptionReasoningDescription": "Höher ist langsamer und kostet mehr Tokens, ist bei schweren Problemen aber stabiler",
+    "deepseekOptionSandbox": "Dateizugriff",
+    "deepseekOptionSandboxDescription": "Befehle und Dateiwerkzeuge teilen sich diese eine Grenze",
+    "deepseekReasoningOff": "Aus",
+    "deepseekReasoningOffDescription": "Antwortet direkt ohne Nachdenken; am schnellsten",
+    "deepseekReasoningLow": "Niedrig",
+    "deepseekReasoningLowDescription": "Denkt kurz nach; stabiler als aus, schneller als hoch",
+    "deepseekReasoningHigh": "Hoch",
+    "deepseekReasoningHighDescription": "Denkt vor der Antwort nach; die Voreinstellung für den Alltag",
+    "deepseekReasoningMax": "Maximal",
+    "deepseekReasoningMaxDescription": "Denkt länger nach; stabiler bei schweren Problemen, aber langsamer und teurer",
+    "deepseekSandboxReadOnly": "Nur lesen",
+    "deepseekSandboxReadOnlyDescription": "Läuft mit einer Nur-Lese-Richtlinie; wechsle den Zugriff, wenn geschrieben werden muss. Auf manchen Plattformen wird das nur teilweise durchgesetzt.",
+    "deepseekSandboxWorkspaceWrite": "Workspace-Schreibzugriff",
+    "deepseekSandboxWorkspaceWriteDescription": "Schreibvorgänge sollen im Workspace der Sitzung und in den temporären Systemverzeichnissen bleiben; ein Aufruf außerhalb davon fragt einmalig nach. Auf manchen Plattformen wird das nur teilweise durchgesetzt.",
+    "deepseekSandboxFullAccess": "Vollzugriff (keine Sandbox)",
+    "deepseekSandboxFullAccessDescription": "Wendet überhaupt keine Dateibeschränkungen an. Wähle das nur, wenn du die Folgen kennst.",
+    "deepseekPermissionAllowOnce": "Einmal erlauben",
+    "deepseekPermissionRejectOnce": "Ablehnen"
+  },
   "SettingsPages": {
     "agentsLoading": "Agent-Einstellungen werden geladen...",
     "skillPacksLoading": "Skill-Pakete werden geladen…"
+  },
+  "CloseBehaviorSettings": {
+    "title": "Verhalten der Schließen-Schaltfläche",
+    "description": "Lege fest, was die Schließen-Schaltfläche des Hauptfensters bewirkt.",
+    "trayUnavailable": "Dieses System bietet keinen nutzbaren Infobereich, daher beendet die Schließen-Schaltfläche codeg immer.",
+    "behaviorAsk": "Jedes Mal fragen",
+    "behaviorMinimize": "In den Infobereich minimieren",
+    "behaviorExit": "codeg beenden",
+    "saveFailed": "Schließverhalten konnte nicht gespeichert werden: {message}"
+  },
+  "CloseRequestDialog": {
+    "askTitle": "codeg schließen?",
+    "askDescription": "codeg kann im Infobereich weiterlaufen, damit Agenten und Terminals aktiv bleiben – oder vollständig beendet werden.",
+    "confirmExitTitle": "codeg beenden?",
+    "confirmExitDescription": "Das Schließen des Fensters ist so eingestellt, dass codeg beendet wird.",
+    "runningTerminals": "{count, plural, one {# Terminal läuft noch und wird beim Beenden geschlossen.} other {# Terminals laufen noch und werden beim Beenden geschlossen.}}",
+    "remember": "Meine Auswahl merken",
+    "cancel": "Abbrechen",
+    "minimize": "In den Infobereich minimieren",
+    "exit": "codeg beenden",
+    "actionFailed": "Aktion fehlgeschlagen: {message}"
   },
   "GeneralSettings": {
     "loading": "Wird geladen...",
@@ -2989,6 +3098,7 @@
         "searchModel": "Modelle suchen...",
         "searchModelAria": "Modelle suchen",
         "modelListLabel": "Modelle",
+        "recommendedBadge": "Empfohlen",
         "noModels": "Keine Modelle gefunden",
         "cancel": "Abbrechen",
         "send": "Senden",
@@ -3259,6 +3369,7 @@
       "messageList": {
         "attachedResources": "Angehängte Ressourcen",
         "loading": "Lädt...",
+        "loadBackgroundActivity": "Hintergrundaktivität laden",
         "loadEarlier": "Frühere Nachrichten laden",
         "loadingEarlier": "Frühere Nachrichten werden geladen…",
         "error": "Fehler: {message}",

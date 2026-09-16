@@ -12,6 +12,7 @@ pub mod acp_transcript;
 pub use acp::{
     idle_sweep_task, idle_timeout_from_env, lifecycle_subscriber_task, SWEEP_INTERVAL_SECS,
 };
+pub use acp::scratch_dir::scratch_sweep_task;
 pub use network::proxy::init_proxy_from_db;
 mod app_error;
 pub mod app_state;
@@ -20,6 +21,7 @@ pub mod backgrounds;
 pub mod chat_channel;
 pub mod commands;
 pub mod db;
+pub mod deep_link;
 pub mod folder_links;
 pub mod forge;
 pub mod git_credential;
@@ -55,6 +57,20 @@ pub fn sweep_acp_binary_trash() {
     crate::acp::binary_cache::sweep_trash();
 }
 
+/// Reclaim per-launch ACP scratch directories left by a previous run — the
+/// crash/force-quit backstop for the in-session sweep. Same contract as
+/// [`sweep_acp_binary_trash`]: safe any time, intended for a detached startup
+/// thread, never panics.
+///
+/// Deletes only directories whose recorded owner is positively confirmed dead
+/// (or is this process and not live — see `acp::scratch_dir`), and never leaves
+/// codeg's own `codeg-acp/` subtree, so a peer codeg instance's work and any
+/// other application's temp files are both out of reach by construction.
+pub fn sweep_acp_scratch_dirs() {
+    crate::acp::scratch_dir::sweep_foreign_orphans();
+    crate::acp::scratch_dir::sweep_own_orphans();
+}
+
 #[cfg(feature = "tauri-runtime")]
 mod tauri_app {
     use std::sync::atomic::{AtomicBool, Ordering};
@@ -87,6 +103,110 @@ mod tauri_app {
     use tauri::Manager;
 
     static APP_QUITTING: AtomicBool = AtomicBool::new(false);
+
+    /// Routes one close-button press to hide, exit, or a prompt.
+    ///
+    /// Called with the close already prevented; every branch is responsible
+    /// for what happens instead. The prompt branches must never be able to
+    /// swallow the press: if no dialog can answer it, each falls back to
+    /// acting on its own.
+    ///
+    /// Two things stand behind that, because nothing here can observe whether a
+    /// dialog actually appeared. `main` is built visible and the dialog only
+    /// starts listening once React has mounted in it, so
+    /// [`system_settings::close_prompt_listener_ready`] holds the press back
+    /// until there is something to answer it; and
+    /// [`system_settings::ClosePromptClaim::Expired`] hands the press back if a
+    /// prompt that WAS sent goes unanswered, which is the only defence against
+    /// everything readiness cannot see.
+    fn handle_main_close_request(window: &tauri::Window, label: &str) {
+        use crate::commands::system_settings;
+        use crate::models::CloseWindowBehavior;
+        use tauri::Emitter;
+
+        let app = window.app_handle().clone();
+        let behavior = if windows::can_hide_to_tray() {
+            system_settings::cached_close_behavior()
+        } else {
+            CloseWindowBehavior::Exit
+        };
+
+        // Only asked for once a prompt is actually going to be shown — it
+        // reaps exited children, and the hide path has no business doing that.
+        let running_terminals = |app: &tauri::AppHandle| {
+            app.try_state::<TerminalManager>()
+                .map(|tm| {
+                    let emitter = web::event_bridge::EventEmitter::Tauri(app.clone());
+                    tm.count_live_by_owner_window(label, Some(&emitter))
+                })
+                .unwrap_or(0)
+        };
+
+        let prompt = |mode: &'static str, count: usize| -> bool {
+            if !system_settings::close_prompt_listener_ready() {
+                // Nothing in the main webview is listening yet — it is still
+                // booting, or its JS never came up at all. Emitting anyway
+                // would claim the prompt flag, show no dialog, and leave the
+                // press unanswered: the window would simply not react, and
+                // every later press would be suppressed as a duplicate until
+                // the dialog mounts and clears the flag. Report "could not
+                // prompt" so the caller acts on the preference instead.
+                return false;
+            }
+            match system_settings::try_open_close_prompt() {
+                // A dialog is already up; this press is a duplicate.
+                system_settings::ClosePromptClaim::AlreadyOpen => return true,
+                // The last prompt was never answered, so it never arrived —
+                // readiness said a listener existed and it turned out not to
+                // reach one. Act on the preference instead of sending a second
+                // prompt down the same silent path.
+                system_settings::ClosePromptClaim::Expired => return false,
+                system_settings::ClosePromptClaim::Granted => {}
+            }
+            let payload = system_settings::CloseRequestPayload {
+                mode,
+                running_terminals: count,
+            };
+            // Addressed to `main`, which is where the only listener lives.
+            // Note this is intent, not enforcement: `TauriTransport.subscribe`
+            // registers with `EventTarget::Any`, and Tauri delivers to those
+            // listeners whatever the emit targets. What actually keeps the
+            // prompt out of the pet / settings / pet-panel webviews — which
+            // share the root layout the dialog is mounted in — is the window
+            // label gate inside `CloseRequestDialog`.
+            match window.emit_to(label, system_settings::CLOSE_REQUEST_EVENT, payload) {
+                Ok(()) => true,
+                Err(err) => {
+                    tracing::warn!("[close] failed to deliver close prompt: {err}");
+                    system_settings::release_close_prompt();
+                    false
+                }
+            }
+        };
+
+        match behavior {
+            CloseWindowBehavior::Minimize => {
+                let _ = window.hide();
+            }
+            CloseWindowBehavior::Exit => {
+                let count = running_terminals(&app);
+                // Nothing to lose, or the confirmation could not be shown —
+                // either way the pinned choice stands.
+                if count == 0 || !prompt("confirm_terminals", count) {
+                    app.exit(0);
+                }
+            }
+            CloseWindowBehavior::Ask => {
+                let count = running_terminals(&app);
+                if !prompt("ask", count) {
+                    // Fall back to the behavior codeg has always had. Exiting
+                    // on a press the user never got to answer would discard
+                    // work; hiding discards nothing.
+                    let _ = window.hide();
+                }
+            }
+        }
+    }
 
     fn summarize_web_auto_start_error(err: &crate::app_error::AppCommandError) -> String {
         match err
@@ -331,8 +451,10 @@ mod tauri_app {
         // development. Debug desktop builds use an isolated SQLite file, but
         // they still share other `app.codeg` data-dir artifacts with release.
         #[cfg(not(debug_assertions))]
-        let builder = builder.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            windows::show_main_window(app);
+        let builder = builder.plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
+            // Second launches on Windows/Linux carry `codeg://…` on argv.
+            // macOS delivers the same URL via the deep-link plugin instead.
+            crate::deep_link::handle_argv(app, &argv);
         }));
 
         builder
@@ -351,6 +473,7 @@ mod tauri_app {
                     )
                     .build(),
             )
+            .plugin(tauri_plugin_deep_link::init())
             .plugin(tauri_plugin_opener::init())
             .plugin(tauri_plugin_dialog::init())
             .plugin(tauri_plugin_updater::Builder::new().build())
@@ -542,9 +665,18 @@ mod tauri_app {
                 // spawned. Anything still locked is left for next startup.
                 std::thread::spawn(|| {
                     let _ = std::panic::catch_unwind(|| {
+                        crate::acp::binary_cache::migrate_legacy_root();
                         crate::sweep_acp_binary_trash();
+                        crate::sweep_acp_scratch_dirs();
                     });
                 });
+
+                // Reclaim scratch directories this process loses track of
+                // mid-session. Its own timer on purpose: the ACP idle sweep is
+                // not spawned at all when `CODEG_ACP_IDLE_TIMEOUT_SECS=0`, and
+                // turning off idle disconnects must not also turn off disk
+                // reclamation on a machine leaking gigabytes per launch.
+                tauri::async_runtime::spawn(crate::scratch_sweep_task());
 
                 // Install bundled expert skills into the central store
                 // (`~/.codeg/skills/`). Runs in the background and does
@@ -629,6 +761,21 @@ mod tauri_app {
                         crate::commands::system_settings::apply_persisted_terminal_settings(
                             &db_for_shell,
                             &shell_config,
+                        )
+                        .await;
+                    });
+                }
+
+                // Seed the close-behavior atomic. `CloseRequested` is a
+                // synchronous callback that reads the cache, not the database,
+                // so an unseeded cache would serve "ask" to a user who pinned
+                // a choice months ago. Blocking here keeps that impossible
+                // even for a close in the first moments after launch.
+                {
+                    let db_for_close = app.state::<db::AppDatabase>().conn.clone();
+                    tauri::async_runtime::block_on(async move {
+                        crate::commands::system_settings::apply_persisted_close_behavior(
+                            &db_for_close,
                         )
                         .await;
                     });
@@ -975,12 +1122,63 @@ mod tauri_app {
                     tauri::async_runtime::spawn(crate::work_task::run_task_engine(engine));
                 }
 
+                // OS `codeg://` URLs. Register the listener after the DB is
+                // live so a warm-start click can look the conversation up.
+                // Cold-start URLs are also read here and baked into the main
+                // window path — an event emitted before the webview subscribes
+                // would be dropped, but `DeepLinkBootstrap` reads the query.
+                // macOS delivers its launch URL only after this hook returns,
+                // so that path lands on the listener below and is parked for
+                // `take_pending_deep_link` instead.
+                {
+                    use tauri_plugin_deep_link::DeepLinkExt;
+                    let handle = app.handle().clone();
+                    let _ = app.deep_link().on_open_url(move |event| {
+                        let urls: Vec<String> =
+                            event.urls().iter().map(|url| url.to_string()).collect();
+                        crate::deep_link::handle_raw_urls(&handle, &urls);
+                    });
+                    // The Linux bundler writes a `.desktop` whose `Exec` has no
+                    // `%u` field code (tauri#16014), so an installed deb/rpm/
+                    // AppImage is advertised as the `x-scheme-handler/codeg`
+                    // owner but is launched with no argument at all. The
+                    // plugin's own registration writes a handler entry that
+                    // does pass `%u`; on Windows it adds the HKCU class key a
+                    // portable/zip copy never gets from the installer. Debug
+                    // builds are skipped so a dev run cannot steal the scheme
+                    // from the installed app (same reason single-instance is
+                    // release-only above).
+                    #[cfg(all(not(debug_assertions), any(windows, target_os = "linux")))]
+                    if let Err(e) = app.deep_link().register_all() {
+                        tracing::warn!("[deep-link] scheme registration failed: {e}");
+                    }
+                }
+                let startup_urls: Vec<String> = {
+                    use tauri_plugin_deep_link::DeepLinkExt;
+                    app.deep_link()
+                        .get_current()
+                        .ok()
+                        .flatten()
+                        .unwrap_or_default()
+                        .into_iter()
+                        .map(|url| url.to_string())
+                        .collect()
+                };
+                let workspace_path = tauri::async_runtime::block_on(
+                    crate::deep_link::startup_workspace_path(
+                        &db::AppDatabase {
+                            conn: app.state::<db::AppDatabase>().conn.clone(),
+                        },
+                        &startup_urls,
+                    ),
+                );
+
                 // Single-window workspace: ensure the main window exists.
                 // Workspace state (open folders, opened tabs, active tab) is
                 // restored by the frontend via `list_open_folder_details` /
                 // `list_opened_tabs` inside the main window.
                 if app.get_webview_window("main").is_none() {
-                    let url = tauri::WebviewUrl::App("workspace".into());
+                    let url = tauri::WebviewUrl::App(workspace_path.into());
                     let builder = tauri::WebviewWindowBuilder::new(app, "main", url)
                         .title("Codeg")
                         .inner_size(1260.0, 860.0)
@@ -1147,31 +1345,28 @@ mod tauri_app {
 
                 if label == "main" {
                     if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                        // The close button does one of two things, depending
-                        // on whether the platform can keep the workspace
-                        // recoverable while it's hidden:
+                        // What the close button does is the user's choice
+                        // (`ask` / `minimize` / `exit`), with one platform
+                        // override:
                         //
-                        //   * tray usable (macOS, Windows + tray): WeChat-style
-                        //     hide. App keeps running, tray brings it back.
                         //   * tray not usable (Linux, tray install failed):
-                        //     force a real app exit. Letting only `main`
+                        //     the preference cannot apply. Letting only `main`
                         //     close would orphan the desktop pet and other
                         //     aux windows in a process with no workspace and
                         //     no way to bring it back — `pet` runs with
                         //     `skip_taskbar(true)`, and the single-instance
                         //     callback's `show_main_window` is a no-op once
-                        //     main is destroyed.
+                        //     main is destroyed. So the choice folds to Exit,
+                        //     rather than exiting right here: folding keeps
+                        //     the running-terminal confirmation below on the
+                        //     path for this platform too.
                         //
                         // ExitRequested itself reaches this branch with
                         // APP_QUITTING already set — that's the only path
                         // that should fall through to the cleanup below.
                         if !APP_QUITTING.load(Ordering::Relaxed) {
                             api.prevent_close();
-                            if windows::can_hide_to_tray() {
-                                let _ = window.hide();
-                            } else {
-                                window.app_handle().exit(0);
-                            }
+                            handle_main_close_request(window, &label);
                             return;
                         }
                         let app = window.app_handle();
@@ -1356,6 +1551,7 @@ mod tauri_app {
                 windows::close_pet_panel,
                 windows::resize_pet_panel,
                 windows::focus_conversation,
+                crate::deep_link::take_pending_deep_link,
                 windows::update_traffic_light_position,
                 windows::update_appearance_mode,
                 windows::set_tray_locale,
@@ -1404,6 +1600,9 @@ mod tauri_app {
                 system_settings::update_system_rendering_settings,
                 system_settings::get_system_autostart_settings,
                 system_settings::update_system_autostart_settings,
+                system_settings::get_system_close_behavior_settings,
+                system_settings::update_system_close_behavior_settings,
+                system_settings::resolve_close_request,
                 logging_commands::get_log_settings,
                 logging_commands::set_log_settings,
                 logging_commands::get_recent_logs,
@@ -1461,6 +1660,8 @@ mod tauri_app {
                 acp_commands::acp_get_agent_status,
                 acp_commands::acp_env_diagnostics,
                 acp_commands::acp_clear_binary_cache,
+                acp_commands::acp_scan_leaked_temp,
+                acp_commands::acp_reclaim_leaked_temp,
                 acp_commands::acp_download_agent_binary,
                 acp_commands::acp_install_uv_tool,
                 acp_commands::acp_detect_agent_local_version,

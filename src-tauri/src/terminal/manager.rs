@@ -449,8 +449,19 @@ impl TerminalManager {
         Ok(())
     }
 
-    pub fn list_with_exit_check(&self, emitter: Option<&EventEmitter>) -> Vec<TerminalInfo> {
-        let mut terminals = self.terminals.lock().unwrap();
+    /// THE liveness gate. Drops terminals whose child has exited and returns
+    /// their ids so the caller can announce them.
+    ///
+    /// Every "is this terminal still running" question routes through here.
+    /// A second copy of the `try_wait` logic is how a close confirmation ends
+    /// up claiming three terminals will die while the kill that follows
+    /// reports two.
+    ///
+    /// Reaped instances get their temp files removed. Dropping a
+    /// `TerminalInstance` releases the PTY but not the credential store and
+    /// helper script on disk — only [`terminate_terminal`] did that, and it is
+    /// not on this path.
+    fn reap_exited(terminals: &mut HashMap<String, TerminalInstance>) -> Vec<String> {
         let mut exited_terminal_ids: Vec<String> = Vec::new();
 
         // Windows ConPTY may not always surface EOF promptly; reconcile exited
@@ -470,8 +481,17 @@ impl TerminalManager {
         }
 
         for terminal_id in &exited_terminal_ids {
-            terminals.remove(terminal_id);
+            if let Some(mut instance) = terminals.remove(terminal_id) {
+                cleanup_temp_files(&mut instance.temp_files);
+            }
         }
+
+        exited_terminal_ids
+    }
+
+    pub fn list_with_exit_check(&self, emitter: Option<&EventEmitter>) -> Vec<TerminalInfo> {
+        let mut terminals = self.terminals.lock().unwrap();
+        let exited_terminal_ids = Self::reap_exited(&mut terminals);
 
         let infos = terminals
             .iter()
@@ -490,6 +510,35 @@ impl TerminalManager {
         }
 
         infos
+    }
+
+    /// How many of `owner_window_label`'s terminals are still running.
+    ///
+    /// Shares [`Self::reap_exited`] with `list_with_exit_check` so a finished
+    /// build is never counted as work in progress — the close confirmation
+    /// this feeds is ignored the moment it cries wolf.
+    pub fn count_live_by_owner_window(
+        &self,
+        owner_window_label: &str,
+        emitter: Option<&EventEmitter>,
+    ) -> usize {
+        let mut terminals = self.terminals.lock().unwrap();
+        let exited_terminal_ids = Self::reap_exited(&mut terminals);
+
+        let live = terminals
+            .values()
+            .filter(|instance| instance.owner_window_label == owner_window_label)
+            .count();
+
+        drop(terminals);
+
+        if let Some(emitter) = emitter {
+            for terminal_id in exited_terminal_ids {
+                emit_terminal_exit_event(emitter, &terminal_id);
+            }
+        }
+
+        live
     }
 
     pub fn kill_by_owner_window(&self, owner_window_label: &str) -> usize {

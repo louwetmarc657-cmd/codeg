@@ -7,7 +7,7 @@ use std::sync::Mutex;
 use sea_orm::DatabaseConnection;
 use tauri::{
     window::{Effect, EffectState, EffectsBuilder},
-    AppHandle, LogicalPosition, LogicalSize, Manager, WebviewUrl, WebviewWindowBuilder,
+    AppHandle, Emitter, LogicalPosition, LogicalSize, Manager, WebviewUrl, WebviewWindowBuilder,
 };
 
 use crate::app_error::AppCommandError;
@@ -1777,6 +1777,11 @@ pub async fn resize_pet_panel(app: AppHandle, height: f64) -> Result<(), AppComm
 /// Bring the main workspace to the foreground and ask it to focus a specific
 /// conversation. Uses an event (not a URL reload) so the in-memory tab/session
 /// state survives — `PetFocusBridge` in the main window calls `openTab`.
+///
+/// Only the pet panel calls this. A `codeg://` OS deep link cannot: the emit
+/// reaches only webviews that have *already* registered a JS listener, which
+/// on a cold start is none of them — see `deep_link::PENDING_FOCUS` for the
+/// handoff that path uses instead.
 #[cfg(feature = "tauri-runtime")]
 #[cfg_attr(feature = "tauri-runtime", tauri::command)]
 pub async fn focus_conversation(
@@ -1785,7 +1790,6 @@ pub async fn focus_conversation(
     conversation_id: i32,
     agent: String,
 ) -> Result<(), AppCommandError> {
-    use tauri::Emitter;
     show_main_window(&app);
     let payload = serde_json::json!({
         "folderId": folder_id,
@@ -1793,9 +1797,7 @@ pub async fn focus_conversation(
         "agent": agent,
     });
     app.emit_to("main", "workspace://focus-conversation", payload)
-        .map_err(|e| {
-            AppCommandError::window("Failed to signal main window", e.to_string())
-        })?;
+        .map_err(|e| AppCommandError::window("Failed to signal main window", e.to_string()))?;
     Ok(())
 }
 

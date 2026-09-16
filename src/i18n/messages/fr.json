@@ -968,7 +968,21 @@
         "action": "Se déconnecter",
         "done": "Déconnecté. Reconnectez-vous pour choisir un autre compte.",
         "failed": "Impossible de se déconnecter"
-      }
+      },
+      "tempReclaimTitle": "Espace temporaire résiduel",
+      "tempReclaimHint": "Les anciennes versions de codeg ne pouvaient pas nettoyer le répertoire temporaire que cet agent décompresse à chaque lancement. Ceci analyse le dossier temporaire du système à la recherche de ces résidus. Ce dossier est partagé avec d'autres applications : rien n'est supprimé avant votre confirmation, et tout élément encore utilisé est ignoré.",
+      "tempReclaimScan": "Analyser",
+      "tempReclaimDelete": "Supprimer les résidus",
+      "tempReclaimNone": "Rien à récupérer.",
+      "tempReclaimFound": "{count} élément(s) résiduel(s), {size} récupérable(s).",
+      "tempReclaimSkipped": "{count} ignoré(s) (encore utilisé(s) ou trop récent(s)).",
+      "tempReclaimed": "{size} récupéré(s) sur {count} élément(s).",
+      "tempReclaimSelectAll": "Tout sélectionner",
+      "tempReclaimAgeHours": "{hours} h",
+      "tempReclaimConfirmTitle": "Supprimer {count} élément(s) ?",
+      "tempReclaimConfirmBody": "Cette action supprime définitivement {size}. Le dossier temporaire du système est partagé avec d'autres applications : vérifiez chaque chemin avant de confirmer. Les éléments encore utilisés sont ignorés.",
+      "tempReclaimConfirmAction": "Supprimer",
+      "tempReclaimCancel": "Annuler"
     },
     "deepseek": {
       "configManagement": "Configuration de DeepSeek Harness",
@@ -1176,6 +1190,46 @@
           "todowrite": "Écrire la liste de tâches",
           "question": "Vous poser une question",
           "doom_loop": "Se déclenche quand le même appel se répète trois fois avec la même entrée"
+        }
+      },
+      "behavior": {
+        "title": "Comportement et compactage",
+        "description": "Valeurs par défaut de session, compactage du contexte et limites de sortie des outils. Écrit dans opencode.json et appliqué après enregistrement ci-dessous.",
+        "docsLink": "Docs de configuration",
+        "unset": "Non configuré",
+        "defaultAgent": "Agent par défaut",
+        "defaultAgentHint": "Agent principal utilisé par une nouvelle session. Vide ou inconnu retombe sur build.",
+        "share": "Partage",
+        "shareHint": "Si une session peut être publiée sous forme de lien partagé.",
+        "shareManual": "Manuel (à la demande)",
+        "shareAuto": "Automatique (chaque nouvelle session)",
+        "shareDisabled": "Désactivé",
+        "autoUpdate": "Mise à jour automatique",
+        "autoUpdateHint": "Si OpenCode se met à jour tout seul vers la dernière version.",
+        "autoUpdateOn": "Mettre à jour automatiquement",
+        "autoUpdateNotify": "Notifier seulement",
+        "autoUpdateOff": "Jamais",
+        "snapshot": "Instantanés du système de fichiers",
+        "snapshotHint": "Enregistre un instantané avant chaque étape. Désactivé, annuler et revenir en arrière ne restaurent plus les fichiers.",
+        "compactionAuto": "Compactage automatique",
+        "compactionAutoHint": "Résume automatiquement la conversation quand la fenêtre de contexte se remplit.",
+        "compactionPrune": "Élaguer les anciennes sorties d'outils",
+        "compactionPruneHint": "Supprime la sortie des anciens appels d'outils lors du compactage au lieu de la résumer.",
+        "fields": {
+          "subagentDepth": "Profondeur des sous-agents",
+          "tailTurns": "Tours conservés tels quels",
+          "preserveRecentTokens": "Tokens conservés tels quels",
+          "reserved": "Tokens réservés",
+          "maxLines": "Limite de lignes de sortie",
+          "maxBytes": "Limite d'octets de sortie"
+        },
+        "hints": {
+          "subagentDepth": "Profondeur d'imbrication des sous-agents. À 1, un sous-agent ne peut pas en lancer un autre.",
+          "tailTurns": "Nombre de tours utilisateur récents laissés hors compactage. Non défini, seul le budget de tokens ci-dessous les limite.",
+          "preserveRecentTokens": "Budget de tokens des tours récents conservés tels quels après un compactage.",
+          "reserved": "Fenêtre laissée libre pour que le compactage lui-même ne fasse pas déborder le contexte.",
+          "maxLines": "Une sortie plus longue est écrite sur disque et remplacée par un aperçu. Par défaut 2000.",
+          "maxBytes": "Une sortie plus grosse est écrite sur disque et remplacée par un aperçu. Par défaut 51200."
         }
       }
     },
@@ -1447,7 +1501,11 @@
       "ready": "L'adaptateur {adapterCmd} est installé : c'est lui que Codeg lance. Il embarque son propre runtime, la {nativeLabel} n'est donc pas nécessaire ; si vous l'installez plus tard, les deux coexistent et partagent {configDir}."
     },
     "cline": {
-      "configDescription": "Configurez le fournisseur API et les identifiants Cline. Les paramètres sont enregistrés dans ~/.cline/data/."
+      "configDescription": "Configurez le fournisseur API et les identifiants Cline. Les paramètres sont enregistrés dans ~/.cline/data/.",
+      "signInGroup": "Se connecter avec Cline",
+      "byoGroup": "Utiliser votre propre fournisseur",
+      "externalGroup": "Configuré en dehors de codeg",
+      "signInHint": "Cline conserve lui-même cet identifiant. Lancez la commande ci-dessous dans un terminal pour vous connecter : elle affiche un code et ouvre une page du navigateur pour le confirmer."
     },
     "opencodePlugins": {
       "title": "Plugins OpenCode",
@@ -1455,7 +1513,10 @@
       "noPlugins": "Aucun plugin déclaré dans opencode.json",
       "status": {
         "installed": "Installé",
-        "missing": "Non installé"
+        "needs_migration": "Migration requise",
+        "missing": "Non installé",
+        "path": "Plugin par chemin",
+        "path_missing": "Chemin introuvable"
       },
       "installAll": "Installer tous les manquants",
       "pinVersions": "Fixer les versions @latest",
@@ -1586,9 +1647,57 @@
     "customAgentBadge": "Personnalisé",
     "customAgentNotLaunchable": "Cet agent ne peut pas démarrer ici : {reason}"
   },
+  "AgentVocabulary": {
+    "deepseekModeDefault": "Normal",
+    "deepseekModeDefaultDescription": "Lit et modifie les fichiers et exécute des commandes directement pour accomplir la tâche",
+    "deepseekModePlan": "Plan",
+    "deepseekModePlanDescription": "Enquête d'abord et propose un plan complet que vous validez avant toute action. Cela oriente le modèle ; la limite réelle reste celle de l'accès aux fichiers.",
+    "deepseekOptionModel": "Modèle",
+    "deepseekOptionReasoning": "Effort de raisonnement",
+    "deepseekOptionReasoningDescription": "Plus c'est élevé, plus c'est lent et coûteux en jetons, mais plus c'est fiable sur les problèmes difficiles",
+    "deepseekOptionSandbox": "Accès aux fichiers",
+    "deepseekOptionSandboxDescription": "Les commandes et les outils de fichiers partagent cette unique limite",
+    "deepseekReasoningOff": "Désactivé",
+    "deepseekReasoningOffDescription": "Répond directement sans raisonner ; le plus rapide",
+    "deepseekReasoningLow": "Faible",
+    "deepseekReasoningLowDescription": "Raisonne brièvement ; plus fiable que désactivé, plus rapide qu'élevé",
+    "deepseekReasoningHigh": "Élevé",
+    "deepseekReasoningHighDescription": "Raisonne avant de répondre ; la valeur par défaut au quotidien",
+    "deepseekReasoningMax": "Maximum",
+    "deepseekReasoningMaxDescription": "Raisonne plus longtemps ; plus fiable sur les problèmes difficiles, mais plus lent et plus coûteux",
+    "deepseekSandboxReadOnly": "Lecture seule",
+    "deepseekSandboxReadOnlyDescription": "S'exécute selon une politique de lecture seule ; changez d'accès quand une écriture est nécessaire. Sur certaines plateformes, l'application n'est que partielle.",
+    "deepseekSandboxWorkspaceWrite": "Écriture dans l'espace de travail",
+    "deepseekSandboxWorkspaceWriteDescription": "Les écritures sont censées rester dans l'espace de travail de la session et les répertoires temporaires du système ; un appel en dehors demande une autorisation ponctuelle. Sur certaines plateformes, l'application n'est que partielle.",
+    "deepseekSandboxFullAccess": "Accès complet (sans bac à sable)",
+    "deepseekSandboxFullAccessDescription": "N'applique aucune restriction de fichiers. Ne le choisissez que si vous en comprenez les conséquences.",
+    "deepseekPermissionAllowOnce": "Autoriser une fois",
+    "deepseekPermissionRejectOnce": "Refuser"
+  },
   "SettingsPages": {
     "agentsLoading": "Chargement des paramètres des agents...",
     "skillPacksLoading": "Chargement des packs de compétences…"
+  },
+  "CloseBehaviorSettings": {
+    "title": "Comportement du bouton Fermer",
+    "description": "Choisissez ce que fait le bouton Fermer de la fenêtre principale.",
+    "trayUnavailable": "Ce système ne dispose pas de zone de notification utilisable : le bouton Fermer quitte toujours codeg.",
+    "behaviorAsk": "Demander à chaque fois",
+    "behaviorMinimize": "Réduire dans la zone de notification",
+    "behaviorExit": "Quitter codeg",
+    "saveFailed": "Échec de l'enregistrement du comportement de fermeture : {message}"
+  },
+  "CloseRequestDialog": {
+    "askTitle": "Fermer codeg ?",
+    "askDescription": "codeg peut continuer à s'exécuter dans la zone de notification pour garder les agents et les terminaux actifs, ou quitter complètement.",
+    "confirmExitTitle": "Quitter codeg ?",
+    "confirmExitDescription": "La fermeture de la fenêtre est configurée pour quitter codeg.",
+    "runningTerminals": "{count, plural, one {# terminal est encore actif et sera fermé en quittant.} other {# terminaux sont encore actifs et seront fermés en quittant.}}",
+    "remember": "Mémoriser mon choix",
+    "cancel": "Annuler",
+    "minimize": "Réduire dans la zone de notification",
+    "exit": "Quitter codeg",
+    "actionFailed": "Échec de l'action : {message}"
   },
   "GeneralSettings": {
     "loading": "Chargement...",
@@ -2989,6 +3098,7 @@
         "searchModel": "Rechercher des modèles...",
         "searchModelAria": "Rechercher des modèles",
         "modelListLabel": "Modèles",
+        "recommendedBadge": "Recommandé",
         "noModels": "Aucun modèle trouvé",
         "cancel": "Annuler",
         "send": "Envoyer",
@@ -3259,6 +3369,7 @@
       "messageList": {
         "attachedResources": "Ressources jointes",
         "loading": "Chargement...",
+        "loadBackgroundActivity": "Charger l'activité en arrière-plan",
         "loadEarlier": "Charger les messages précédents",
         "loadingEarlier": "Chargement des messages précédents…",
         "error": "Erreur : {message}",

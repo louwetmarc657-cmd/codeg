@@ -968,7 +968,21 @@
         "action": "サインアウト",
         "done": "サインアウトしました。サインインし直すと別のアカウントを選べます。",
         "failed": "サインアウトできませんでした"
-      }
+      },
+      "tempReclaimTitle": "残存した一時領域",
+      "tempReclaimHint": "以前のバージョンの codeg は、このエージェントが起動のたびに展開する一時ディレクトリを削除できませんでした。システムの一時フォルダーからその残存物を検索します。このフォルダーは他のアプリケーションと共有されているため、確認するまで何も削除されず、使用中の項目はスキップされます。",
+      "tempReclaimScan": "スキャン",
+      "tempReclaimDelete": "残存物を削除",
+      "tempReclaimNone": "回収できるものはありません。",
+      "tempReclaimFound": "残存物 {count} 件、{size} を回収できます。",
+      "tempReclaimSkipped": "{count} 件をスキップしました（使用中または新しすぎます）。",
+      "tempReclaimed": "{count} 件から {size} を回収しました。",
+      "tempReclaimSelectAll": "すべて選択",
+      "tempReclaimAgeHours": "{hours} 時間",
+      "tempReclaimConfirmTitle": "選択した {count} 件を削除しますか？",
+      "tempReclaimConfirmBody": "{size} を完全に削除します。システムの一時フォルダーは他のアプリと共有されるため、確認する前に各パスをご確認ください。使用中のものはスキップされます。",
+      "tempReclaimConfirmAction": "削除",
+      "tempReclaimCancel": "キャンセル"
     },
     "deepseek": {
       "configManagement": "DeepSeek Harness の設定",
@@ -1176,6 +1190,46 @@
           "todowrite": "TODO リストの書き込み",
           "question": "あなたへの質問",
           "doom_loop": "同じ入力で同じ呼び出しが 3 回繰り返されたときに作動"
+        }
+      },
+      "behavior": {
+        "title": "動作とコンパクション",
+        "description": "セッションの既定値、コンテキストのコンパクション、ツール出力の上限。opencode.json に書き込まれ、下の保存で反映されます。",
+        "docsLink": "設定ドキュメント",
+        "unset": "未設定",
+        "defaultAgent": "既定エージェント",
+        "defaultAgentHint": "新しいセッションで使うプライマリエージェント。空または不明な場合は build に戻ります。",
+        "share": "共有",
+        "shareHint": "セッションを共有リンクとして公開できるかどうか。",
+        "shareManual": "手動（必要なときだけ）",
+        "shareAuto": "自動（新しいセッションを常に共有）",
+        "shareDisabled": "無効",
+        "autoUpdate": "自動更新",
+        "autoUpdateHint": "OpenCode が自身を最新版へ更新するかどうか。",
+        "autoUpdateOn": "自動的に更新",
+        "autoUpdateNotify": "通知のみ",
+        "autoUpdateOff": "更新しない",
+        "snapshot": "ファイルシステムのスナップショット",
+        "snapshotHint": "各ステップの前にスナップショットを記録します。オフにすると取り消しと復元でファイルを戻せなくなります。",
+        "compactionAuto": "自動コンパクション",
+        "compactionAutoHint": "コンテキストウィンドウが埋まったら会話を自動的に要約します。",
+        "compactionPrune": "古いツール出力を削る",
+        "compactionPruneHint": "コンパクション時に古いツール呼び出しの出力を要約せずに破棄します。",
+        "fields": {
+          "subagentDepth": "サブエージェントの深さ",
+          "tailTurns": "原文のまま残すターン数",
+          "preserveRecentTokens": "原文のまま残すトークン数",
+          "reserved": "予約トークン",
+          "maxLines": "ツール出力の行数上限",
+          "maxBytes": "ツール出力のバイト数上限"
+        },
+        "hints": {
+          "subagentDepth": "サブエージェントを何段までネストできるか。1 ならサブエージェントはさらに別のサブエージェントを起動できません。",
+          "tailTurns": "直近いくつのユーザーターンをコンパクションから除外するか。未設定なら下のトークン予算だけが上限になります。",
+          "preserveRecentTokens": "コンパクション後も原文のまま残す直近ターンのトークン予算。",
+          "reserved": "コンパクション自体がコンテキストを溢れさせないよう空けておくウィンドウ。",
+          "maxLines": "これを超える出力はディスクに書き出され、プレビューだけが残ります。既定 2000。",
+          "maxBytes": "これを超える出力はディスクに書き出され、プレビューだけが残ります。既定 51200。"
         }
       }
     },
@@ -1447,7 +1501,11 @@
       "ready": "アダプター {adapterCmd} はインストール済みで、Codeg が起動するのはこれです。独自のランタイムを同梱しているため {nativeLabel} は不要です。後から入れても両者は共存し、{configDir} を共有します。"
     },
     "cline": {
-      "configDescription": "Cline API プロバイダーと認証情報を設定します。設定は ~/.cline/data/ に保存されます。"
+      "configDescription": "Cline API プロバイダーと認証情報を設定します。設定は ~/.cline/data/ に保存されます。",
+      "signInGroup": "Cline アカウントでサインイン",
+      "byoGroup": "自分のプロバイダーを使う",
+      "externalGroup": "codeg の外で設定済み",
+      "signInHint": "この資格情報は cline 自身が保持します。ターミナルで下のコマンドを実行してサインインしてください。コードが表示され、ブラウザで確認するページが開きます。"
     },
     "opencodePlugins": {
       "title": "OpenCode プラグイン",
@@ -1455,7 +1513,10 @@
       "noPlugins": "opencode.json にプラグインが宣言されていません",
       "status": {
         "installed": "インストール済み",
-        "missing": "未インストール"
+        "needs_migration": "移行が必要",
+        "missing": "未インストール",
+        "path": "パスプラグイン",
+        "path_missing": "パスが見つかりません"
       },
       "installAll": "不足プラグインをすべてインストール",
       "pinVersions": "@latest バージョンを固定",
@@ -1586,9 +1647,57 @@
     "customAgentBadge": "カスタム",
     "customAgentNotLaunchable": "この環境では起動できません: {reason}"
   },
+  "AgentVocabulary": {
+    "deepseekModeDefault": "通常",
+    "deepseekModeDefaultDescription": "ファイルの読み書きとコマンド実行を直接おこなってタスクを完了します",
+    "deepseekModePlan": "プラン",
+    "deepseekModePlanDescription": "まず調査し、完全な計画を提示して確認を得てから着手します。これはモデルへの誘導であり、実際の境界は「ファイルアクセス」で決まります。",
+    "deepseekOptionModel": "モデル",
+    "deepseekOptionReasoning": "推論の強度",
+    "deepseekOptionReasoningDescription": "高いほど遅くトークンを消費しますが、難しい問題では安定します",
+    "deepseekOptionSandbox": "ファイルアクセス",
+    "deepseekOptionSandboxDescription": "コマンドとファイルツールはこの境界を共有します",
+    "deepseekReasoningOff": "オフ",
+    "deepseekReasoningOffDescription": "推論せずに直接回答します。最速です",
+    "deepseekReasoningLow": "低",
+    "deepseekReasoningLowDescription": "少しだけ推論します。オフより安定し、高より高速です",
+    "deepseekReasoningHigh": "高",
+    "deepseekReasoningHighDescription": "推論してから回答します。日常のコーディング向けの既定値です",
+    "deepseekReasoningMax": "最高",
+    "deepseekReasoningMaxDescription": "より長く推論します。難問には強いものの、遅くトークンも多く消費します",
+    "deepseekSandboxReadOnly": "読み取り専用",
+    "deepseekSandboxReadOnlyDescription": "読み取り専用ポリシーで実行します。書き込みが必要なときは権限を切り替えてください。プラットフォームによっては部分的な強制にとどまります。",
+    "deepseekSandboxWorkspaceWrite": "ワークスペース書き込み",
+    "deepseekSandboxWorkspaceWriteDescription": "書き込みはセッションのワークスペースとシステムの一時ディレクトリ内に収める想定です。範囲外の呼び出しは都度の承認を求めます。プラットフォームによっては部分的な強制にとどまります。",
+    "deepseekSandboxFullAccess": "フルアクセス（サンドボックスなし）",
+    "deepseekSandboxFullAccessDescription": "ファイルの制限を一切適用しません。結果を理解している場合にのみ選んでください。",
+    "deepseekPermissionAllowOnce": "今回のみ許可",
+    "deepseekPermissionRejectOnce": "拒否"
+  },
   "SettingsPages": {
     "agentsLoading": "エージェント設定を読み込み中...",
     "skillPacksLoading": "スキルパックを読み込み中…"
+  },
+  "CloseBehaviorSettings": {
+    "title": "閉じるボタンの動作",
+    "description": "メインウィンドウの閉じるボタンを押したときの動作を選択します。",
+    "trayUnavailable": "このシステムでは通知領域を利用できないため、閉じるボタンは常に codeg を終了します。",
+    "behaviorAsk": "毎回確認する",
+    "behaviorMinimize": "通知領域に最小化",
+    "behaviorExit": "codeg を終了",
+    "saveFailed": "閉じる動作の保存に失敗しました: {message}"
+  },
+  "CloseRequestDialog": {
+    "askTitle": "codeg を閉じますか？",
+    "askDescription": "通知領域に常駐してエージェントとターミナルを動かし続けることも、完全に終了することもできます。",
+    "confirmExitTitle": "codeg を終了しますか？",
+    "confirmExitDescription": "現在の設定では、ウィンドウを閉じると codeg が終了します。",
+    "runningTerminals": "{count} 個のターミナルが実行中です。終了するとすべて停止します。",
+    "remember": "この選択を記憶する",
+    "cancel": "キャンセル",
+    "minimize": "通知領域に最小化",
+    "exit": "codeg を終了",
+    "actionFailed": "操作に失敗しました: {message}"
   },
   "GeneralSettings": {
     "loading": "読み込み中...",
@@ -2989,6 +3098,7 @@
         "searchModel": "モデルを検索...",
         "searchModelAria": "モデルを検索",
         "modelListLabel": "モデル",
+        "recommendedBadge": "推奨",
         "noModels": "モデルが見つかりません",
         "cancel": "キャンセル",
         "send": "送信",
@@ -3259,6 +3369,7 @@
       "messageList": {
         "attachedResources": "添付リソース",
         "loading": "読み込み中...",
+        "loadBackgroundActivity": "バックグラウンドの動作を読み込む",
         "loadEarlier": "以前のメッセージを読み込む",
         "loadingEarlier": "以前のメッセージを読み込み中…",
         "error": "エラー: {message}",

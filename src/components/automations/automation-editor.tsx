@@ -379,6 +379,7 @@ export function AutomationEditor({
           mentionUiLabels={mentionUiLabels}
           tabLabels={referenceGroupLabels}
           mentionAnchorRef={composerBoxRef}
+          knownInvocations={invocations.knownInvocations}
           onChange={(text) => {
             setPrompt(text)
             invocations.detect()
@@ -389,6 +390,7 @@ export function AutomationEditor({
         />
         <div className="px-2 pb-2 pt-1">
           <AgentConfigSection
+            agentType={agentOptions.snapshotAgentType}
             snapshot={agentOptions.snapshot}
             loading={agentOptions.loading}
             error={agentOptions.error}

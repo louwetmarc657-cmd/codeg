@@ -57,6 +57,14 @@ vi.mock("@/lib/api", () => ({
     work_tasks_enabled: false,
   })),
   setChatAuthoringSettings: vi.fn(async (v: unknown) => v),
+  getSystemCloseBehaviorSettings: vi.fn(async () => ({
+    behavior: "ask" as const,
+    tray_available: true,
+  })),
+  updateSystemCloseBehaviorSettings: vi.fn(async (behavior: string) => ({
+    behavior,
+    tray_available: true,
+  })),
 }))
 
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }))

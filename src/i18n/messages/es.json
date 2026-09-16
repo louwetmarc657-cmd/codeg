@@ -968,7 +968,21 @@
         "action": "Cerrar sesión",
         "done": "Sesión cerrada. Vuelve a iniciar sesión para elegir otra cuenta.",
         "failed": "No se pudo cerrar la sesión"
-      }
+      },
+      "tempReclaimTitle": "Espacio temporal sobrante",
+      "tempReclaimHint": "Las versiones anteriores de codeg no podían limpiar el directorio temporal que este agente descomprime en cada inicio. Esto analiza la carpeta temporal del sistema en busca de esos restos. Esa carpeta se comparte con otras aplicaciones, por lo que no se elimina nada hasta que confirmes, y se omite todo lo que siga en uso.",
+      "tempReclaimScan": "Analizar",
+      "tempReclaimDelete": "Eliminar restos",
+      "tempReclaimNone": "No hay nada que recuperar.",
+      "tempReclaimFound": "{count} elemento(s) sobrante(s), {size} recuperable(s).",
+      "tempReclaimSkipped": "{count} omitido(s) (en uso o demasiado reciente).",
+      "tempReclaimed": "Se recuperaron {size} de {count} elemento(s).",
+      "tempReclaimSelectAll": "Seleccionar todo",
+      "tempReclaimAgeHours": "{hours} h",
+      "tempReclaimConfirmTitle": "¿Eliminar {count} elemento(s)?",
+      "tempReclaimConfirmBody": "Esto elimina permanentemente {size}. La carpeta temporal del sistema se comparte con otras aplicaciones, así que revisa cada ruta antes de confirmar; lo que siga en uso se omite.",
+      "tempReclaimConfirmAction": "Eliminar",
+      "tempReclaimCancel": "Cancelar"
     },
     "deepseek": {
       "configManagement": "Configuración de DeepSeek Harness",
@@ -1176,6 +1190,46 @@
           "todowrite": "Escribir la lista de tareas",
           "question": "Hacerte una pregunta",
           "doom_loop": "Se activa cuando la misma llamada se repite tres veces con la misma entrada"
+        }
+      },
+      "behavior": {
+        "title": "Comportamiento y compactación",
+        "description": "Valores por defecto de la sesión, compactación del contexto y límites de salida de herramientas. Se escribe en opencode.json y se aplica al guardar abajo.",
+        "docsLink": "Documentación de configuración",
+        "unset": "Sin configurar",
+        "defaultAgent": "Agente por defecto",
+        "defaultAgentHint": "Con qué agente principal se abre una sesión nueva. Si está vacío o no existe, se usa build.",
+        "share": "Compartir",
+        "shareHint": "Si una sesión puede publicarse como enlace compartido.",
+        "shareManual": "Manual (solo a petición)",
+        "shareAuto": "Automático (cada sesión nueva)",
+        "shareDisabled": "Desactivado",
+        "autoUpdate": "Actualización automática",
+        "autoUpdateHint": "Si OpenCode se actualiza solo a la última versión.",
+        "autoUpdateOn": "Actualizar automáticamente",
+        "autoUpdateNotify": "Solo avisar",
+        "autoUpdateOff": "Nunca",
+        "snapshot": "Instantáneas del sistema de archivos",
+        "snapshotHint": "Registra una instantánea antes de cada paso. Al desactivarlo, deshacer y revertir ya no restauran archivos.",
+        "compactionAuto": "Compactación automática",
+        "compactionAutoHint": "Resume la conversación automáticamente cuando se llena la ventana de contexto.",
+        "compactionPrune": "Podar salida antigua de herramientas",
+        "compactionPruneHint": "Descarta la salida de llamadas antiguas al compactar en lugar de resumirla.",
+        "fields": {
+          "subagentDepth": "Profundidad de subagentes",
+          "tailTurns": "Turnos conservados literales",
+          "preserveRecentTokens": "Tokens conservados literales",
+          "reserved": "Tokens reservados",
+          "maxLines": "Límite de líneas de salida",
+          "maxBytes": "Límite de bytes de salida"
+        },
+        "hints": {
+          "subagentDepth": "Cuántos niveles pueden anidar los subagentes. Con 1, un subagente no puede lanzar otro.",
+          "tailTurns": "Turnos de usuario recientes que no se compactan. Sin valor, solo los limita el presupuesto de tokens de abajo.",
+          "preserveRecentTokens": "Presupuesto de tokens de los turnos recientes que se conservan literales tras compactar.",
+          "reserved": "Ventana que se deja libre para que la propia compactación no desborde el contexto.",
+          "maxLines": "La salida más larga se escribe en disco y se sustituye por una vista previa. Por defecto 2000.",
+          "maxBytes": "La salida más grande se escribe en disco y se sustituye por una vista previa. Por defecto 51200."
         }
       }
     },
@@ -1447,7 +1501,11 @@
       "ready": "El adaptador {adapterCmd} está instalado: es lo que Codeg ejecuta. Incluye su propio runtime, así que la {nativeLabel} no es necesaria; si la instalas después, ambas conviven y comparten {configDir}."
     },
     "cline": {
-      "configDescription": "Configure el proveedor de API y las credenciales de Cline. La configuración se guarda en ~/.cline/data/."
+      "configDescription": "Configure el proveedor de API y las credenciales de Cline. La configuración se guarda en ~/.cline/data/.",
+      "signInGroup": "Iniciar sesión con Cline",
+      "byoGroup": "Usa tu propio proveedor",
+      "externalGroup": "Configurado fuera de codeg",
+      "signInHint": "Cline guarda esta credencial por sí mismo. Ejecuta el comando de abajo en una terminal para iniciar sesión: muestra un código y abre una página del navegador para confirmarlo."
     },
     "opencodePlugins": {
       "title": "Plugins de OpenCode",
@@ -1455,7 +1513,10 @@
       "noPlugins": "No hay plugins declarados en opencode.json",
       "status": {
         "installed": "Instalado",
-        "missing": "No instalado"
+        "needs_migration": "Requiere migración",
+        "missing": "No instalado",
+        "path": "Complemento de ruta",
+        "path_missing": "Ruta no encontrada"
       },
       "installAll": "Instalar todos los faltantes",
       "pinVersions": "Fijar versiones @latest",
@@ -1586,9 +1647,57 @@
     "customAgentBadge": "Personalizado",
     "customAgentNotLaunchable": "Este agente no puede iniciarse aquí: {reason}"
   },
+  "AgentVocabulary": {
+    "deepseekModeDefault": "Normal",
+    "deepseekModeDefaultDescription": "Lee y edita archivos y ejecuta comandos directamente para completar la tarea",
+    "deepseekModePlan": "Plan",
+    "deepseekModePlanDescription": "Investiga primero y propone un plan completo para que lo confirmes antes de actuar. Orienta al modelo; el límite real lo sigue marcando el acceso a archivos.",
+    "deepseekOptionModel": "Modelo",
+    "deepseekOptionReasoning": "Esfuerzo de razonamiento",
+    "deepseekOptionReasoningDescription": "Cuanto más alto, más lento y más tokens consume, pero es más estable en problemas difíciles",
+    "deepseekOptionSandbox": "Acceso a archivos",
+    "deepseekOptionSandboxDescription": "Los comandos y las herramientas de archivos comparten este único límite",
+    "deepseekReasoningOff": "Desactivado",
+    "deepseekReasoningOffDescription": "Responde directamente sin razonar; lo más rápido",
+    "deepseekReasoningLow": "Bajo",
+    "deepseekReasoningLowDescription": "Razona brevemente; más estable que desactivado, más rápido que alto",
+    "deepseekReasoningHigh": "Alto",
+    "deepseekReasoningHighDescription": "Razona antes de responder; el valor por defecto para programar a diario",
+    "deepseekReasoningMax": "Máximo",
+    "deepseekReasoningMaxDescription": "Razona durante más tiempo; más estable en problemas difíciles, pero más lento y con más tokens",
+    "deepseekSandboxReadOnly": "Solo lectura",
+    "deepseekSandboxReadOnlyDescription": "Se ejecuta con una política de solo lectura; cambia el acceso cuando haga falta escribir. En algunas plataformas la aplicación es parcial.",
+    "deepseekSandboxWorkspaceWrite": "Escritura en el espacio de trabajo",
+    "deepseekSandboxWorkspaceWriteDescription": "Las escrituras deben quedarse dentro del espacio de trabajo de la sesión y de los directorios temporales del sistema; una llamada fuera de ellos pide autorización puntual. En algunas plataformas la aplicación es parcial.",
+    "deepseekSandboxFullAccess": "Acceso total (sin sandbox)",
+    "deepseekSandboxFullAccessDescription": "No aplica ninguna restricción de archivos. Elígelo solo si entiendes las consecuencias.",
+    "deepseekPermissionAllowOnce": "Permitir una vez",
+    "deepseekPermissionRejectOnce": "Rechazar"
+  },
   "SettingsPages": {
     "agentsLoading": "Cargando configuración de agentes...",
     "skillPacksLoading": "Cargando paquetes de habilidades…"
+  },
+  "CloseBehaviorSettings": {
+    "title": "Comportamiento del botón de cerrar",
+    "description": "Elige qué hace el botón de cerrar de la ventana principal.",
+    "trayUnavailable": "Este sistema no tiene una bandeja utilizable, por lo que el botón de cerrar siempre sale de codeg.",
+    "behaviorAsk": "Preguntar cada vez",
+    "behaviorMinimize": "Minimizar a la bandeja",
+    "behaviorExit": "Salir de codeg",
+    "saveFailed": "No se pudo guardar el comportamiento de cierre: {message}"
+  },
+  "CloseRequestDialog": {
+    "askTitle": "¿Cerrar codeg?",
+    "askDescription": "codeg puede seguir ejecutándose en la bandeja para mantener activos los agentes y las terminales, o salir por completo.",
+    "confirmExitTitle": "¿Salir de codeg?",
+    "confirmExitDescription": "Cerrar la ventana está configurado para salir de codeg.",
+    "runningTerminals": "{count, plural, one {# terminal sigue en ejecución y se cerrará al salir.} other {# terminales siguen en ejecución y se cerrarán al salir.}}",
+    "remember": "Recordar mi elección",
+    "cancel": "Cancelar",
+    "minimize": "Minimizar a la bandeja",
+    "exit": "Salir de codeg",
+    "actionFailed": "La acción falló: {message}"
   },
   "GeneralSettings": {
     "loading": "Cargando...",
@@ -2989,6 +3098,7 @@
         "searchModel": "Buscar modelos...",
         "searchModelAria": "Buscar modelos",
         "modelListLabel": "Modelos",
+        "recommendedBadge": "Recomendado",
         "noModels": "No se encontraron modelos",
         "cancel": "Cancelar",
         "send": "Enviar",
@@ -3259,6 +3369,7 @@
       "messageList": {
         "attachedResources": "Recursos adjuntos",
         "loading": "Cargando...",
+        "loadBackgroundActivity": "Cargar actividad en segundo plano",
         "loadEarlier": "Cargar mensajes anteriores",
         "loadingEarlier": "Cargando mensajes anteriores…",
         "error": "Error del chat: {message}",

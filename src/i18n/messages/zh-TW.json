@@ -968,7 +968,21 @@
         "action": "登出",
         "done": "已登出。重新登入即可選擇其他帳號。",
         "failed": "登出失敗"
-      }
+      },
+      "tempReclaimTitle": "殘留暫存空間",
+      "tempReclaimHint": "舊版本 codeg 無法清理此代理每次啟動時解壓的暫存目錄。此操作會掃描系統暫存資料夾中的這些殘留。該資料夾與其他應用程式共用，因此在你確認之前不會刪除任何內容，仍在使用中的項目也會被跳過。",
+      "tempReclaimScan": "掃描",
+      "tempReclaimDelete": "刪除殘留",
+      "tempReclaimNone": "沒有可回收的內容。",
+      "tempReclaimFound": "發現 {count} 項殘留，可回收 {size}。",
+      "tempReclaimSkipped": "已跳過 {count} 項（仍在使用或過新）。",
+      "tempReclaimed": "已從 {count} 項中回收 {size}。",
+      "tempReclaimSelectAll": "全選",
+      "tempReclaimAgeHours": "{hours} 小時",
+      "tempReclaimConfirmTitle": "刪除選取的 {count} 項？",
+      "tempReclaimConfirmBody": "將永久刪除 {size}。系統暫存目錄與其他應用共用，確認前請先核對每條路徑；仍在使用中的項目會被略過。",
+      "tempReclaimConfirmAction": "刪除",
+      "tempReclaimCancel": "取消"
     },
     "deepseek": {
       "configManagement": "DeepSeek Harness 設定",
@@ -1176,6 +1190,46 @@
           "todowrite": "寫入待辦清單",
           "question": "向你提問",
           "doom_loop": "同一呼叫以相同輸入重複 3 次時觸發"
+        }
+      },
+      "behavior": {
+        "title": "行為與壓縮",
+        "description": "工作階段預設值、上下文壓縮與工具輸出上限。寫入 opencode.json，按下方儲存後生效。",
+        "docsLink": "設定文件",
+        "unset": "未設定",
+        "defaultAgent": "預設智慧體",
+        "defaultAgentHint": "新工作階段使用哪個主要智慧體。留空或名稱無效時回落到 build。",
+        "share": "工作階段分享",
+        "shareHint": "工作階段是否可以發佈成分享連結。",
+        "shareManual": "手動（需要時才分享）",
+        "shareAuto": "自動（每個新工作階段都分享）",
+        "shareDisabled": "停用",
+        "autoUpdate": "自動更新",
+        "autoUpdateHint": "OpenCode 是否自行升級到最新版本。",
+        "autoUpdateOn": "自動更新",
+        "autoUpdateNotify": "僅提示",
+        "autoUpdateOff": "永不",
+        "snapshot": "檔案系統快照",
+        "snapshotHint": "每一步之前記錄一次快照。關閉後復原與還原將無法回復檔案。",
+        "compactionAuto": "自動壓縮",
+        "compactionAutoHint": "上下文視窗快滿時自動總結對話。",
+        "compactionPrune": "裁剪舊工具輸出",
+        "compactionPruneHint": "壓縮時直接丟棄較早工具呼叫的輸出，而不是總結進去。",
+        "fields": {
+          "subagentDepth": "子智慧體層數",
+          "tailTurns": "保留原文的輪數",
+          "preserveRecentTokens": "保留原文的 token 數",
+          "reserved": "預留 token",
+          "maxLines": "工具輸出行數上限",
+          "maxBytes": "工具輸出位元組上限"
+        },
+        "hints": {
+          "subagentDepth": "子智慧體最多可以巢狀幾層。填 1 表示子智慧體不能再啟動子智慧體。",
+          "tailTurns": "最近多少輪使用者對話不參與壓縮。留空表示只受下方的 token 預算約束。",
+          "preserveRecentTokens": "壓縮後仍按原文保留的最近對話 token 預算。",
+          "reserved": "為壓縮本身預留的視窗，避免壓縮過程反而撐爆上下文。",
+          "maxLines": "超過該行數的輸出會落檔，只在對話裡留一段預覽。預設 2000。",
+          "maxBytes": "超過該位元組數的輸出會落檔，只在對話裡留一段預覽。預設 51200。"
         }
       }
     },
@@ -1447,7 +1501,11 @@
       "ready": "轉接器 {adapterCmd} 已安裝 —— Codeg 啟動的就是它。它自帶執行環境，所以不需要另外安裝 {nativeLabel}；即使日後你安裝了，兩者也能並存並共用 {configDir}。"
     },
     "cline": {
-      "configDescription": "配置 Cline API 提供商和憑證。設定將儲存到 ~/.cline/data/。"
+      "configDescription": "配置 Cline API 提供商和憑證。設定將儲存到 ~/.cline/data/。",
+      "signInGroup": "使用 Cline 帳號登入",
+      "byoGroup": "自帶供應商",
+      "externalGroup": "在 codeg 之外設定的",
+      "signInHint": "這類憑證由 cline 自己保管。在終端機執行下面的指令登入——它會印出一組驗證碼，並開啟瀏覽器頁面讓你確認。"
     },
     "opencodePlugins": {
       "title": "OpenCode 外掛",
@@ -1455,7 +1513,10 @@
       "noPlugins": "opencode.json 中未宣告任何外掛",
       "status": {
         "installed": "已安裝",
-        "missing": "未安裝"
+        "needs_migration": "需要遷移",
+        "missing": "未安裝",
+        "path": "路徑外掛",
+        "path_missing": "路徑不存在"
       },
       "installAll": "安裝全部缺失外掛",
       "pinVersions": "固定 @latest 版本",
@@ -1586,9 +1647,57 @@
     "customAgentBadge": "自訂",
     "customAgentNotLaunchable": "該智慧體在此環境無法啟動：{reason}"
   },
+  "AgentVocabulary": {
+    "deepseekModeDefault": "常規",
+    "deepseekModeDefaultDescription": "直接讀寫檔案、執行命令完成任務",
+    "deepseekModePlan": "計畫",
+    "deepseekModePlanDescription": "先調查再提出完整方案，經你確認後才動手；這只是對模型的引導，實際邊界仍由「檔案權限」決定。",
+    "deepseekOptionModel": "模型",
+    "deepseekOptionReasoning": "推理檔位",
+    "deepseekOptionReasoningDescription": "越高越慢越耗 token，難題更穩",
+    "deepseekOptionSandbox": "檔案權限",
+    "deepseekOptionSandboxDescription": "命令與檔案工具共用這一條邊界",
+    "deepseekReasoningOff": "關閉",
+    "deepseekReasoningOffDescription": "不做推理，直接作答；最快",
+    "deepseekReasoningLow": "低",
+    "deepseekReasoningLowDescription": "略作推理；比關閉穩，比高檔快",
+    "deepseekReasoningHigh": "高",
+    "deepseekReasoningHighDescription": "推理後作答；日常編碼的預設檔",
+    "deepseekReasoningMax": "最高",
+    "deepseekReasoningMaxDescription": "推理更久；難題更穩，但較慢且更耗 token",
+    "deepseekSandboxReadOnly": "唯讀",
+    "deepseekSandboxReadOnlyDescription": "依唯讀策略執行；需要寫入時切換權限。部分平台上只是部分強制。",
+    "deepseekSandboxWorkspaceWrite": "可寫工作區",
+    "deepseekSandboxWorkspaceWriteDescription": "寫入意在限制於工作階段工作區與系統暫存目錄；越界的呼叫會請求單次授權。部分平台上只是部分強制。",
+    "deepseekSandboxFullAccess": "完全開放（無沙箱）",
+    "deepseekSandboxFullAccessDescription": "不施加任何檔案限制。僅在你清楚後果時選擇。",
+    "deepseekPermissionAllowOnce": "允許本次",
+    "deepseekPermissionRejectOnce": "拒絕"
+  },
   "SettingsPages": {
     "agentsLoading": "載入 Agent 設定中...",
     "skillPacksLoading": "正在載入技能包…"
+  },
+  "CloseBehaviorSettings": {
+    "title": "關閉按鈕行為",
+    "description": "選擇點擊主視窗關閉按鈕時的行為。",
+    "trayUnavailable": "目前系統沒有可用的系統匣，關閉按鈕將一律結束 codeg。",
+    "behaviorAsk": "每次詢問",
+    "behaviorMinimize": "最小化到系統匣",
+    "behaviorExit": "結束 codeg",
+    "saveFailed": "儲存關閉行為失敗：{message}"
+  },
+  "CloseRequestDialog": {
+    "askTitle": "要關閉 codeg 嗎？",
+    "askDescription": "codeg 可以最小化到系統匣繼續執行，讓智能體與終端機保持運作；也可以完全結束。",
+    "confirmExitTitle": "要結束 codeg 嗎？",
+    "confirmExitDescription": "目前設定為：關閉視窗即結束 codeg。",
+    "runningTerminals": "還有 {count} 個終端機正在執行，結束後會全部中止。",
+    "remember": "記住我的選擇",
+    "cancel": "取消",
+    "minimize": "最小化到系統匣",
+    "exit": "結束 codeg",
+    "actionFailed": "操作失敗：{message}"
   },
   "GeneralSettings": {
     "loading": "載入中...",
@@ -2989,6 +3098,7 @@
         "searchModel": "搜尋模型...",
         "searchModelAria": "搜尋模型",
         "modelListLabel": "模型",
+        "recommendedBadge": "推薦",
         "noModels": "找不到模型",
         "cancel": "取消",
         "send": "傳送",
@@ -3259,6 +3369,7 @@
       "messageList": {
         "attachedResources": "附加資源",
         "loading": "載入中...",
+        "loadBackgroundActivity": "載入背景活動",
         "loadEarlier": "載入更早的訊息",
         "loadingEarlier": "正在載入更早的訊息…",
         "error": "錯誤：{message}",

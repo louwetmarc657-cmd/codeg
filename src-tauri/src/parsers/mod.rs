@@ -94,11 +94,21 @@ pub fn external_transcript_sources() -> Vec<ExternalSource> {
             include_top: Some(&["tmp", "history", "projects.json"]),
         },
         ExternalSource {
+            // cline 3.x keeps transcripts in `sessions/` and indexes them in
+            // the live SQLite store `db/sessions.db`; `state/` + `tasks/` are
+            // the pre-3.x layout, still read by the parser. Everything else
+            // under the same base dir is credentials and machine state —
+            // `secrets.json`, `settings/`, `cache/`, `locks/` — so the
+            // allowlist is what keeps a backup from carrying API keys.
+            //
+            // `sqlite: true` because of `db/`: archiving a live store as plain
+            // files would pack its main file next to a `-wal` written at
+            // another moment, which is a corrupt store on restore.
             agent: "cline",
             root: cline::cline_data_dir(),
             is_file: false,
-            sqlite: false,
-            include_top: None,
+            sqlite: true,
+            include_top: Some(&["sessions", "db", "state", "tasks"]),
         },
         ExternalSource {
             agent: "opencode",
@@ -853,8 +863,15 @@ pub fn infer_context_window_max_tokens(model: Option<&str>) -> Option<u64> {
         }
         return Some(200_000);
     }
+    // gemini-cli's own `tokenLimit()` (packages/core/src/core/tokenLimits.ts,
+    // 0.60.0): 1 << 20 for every Gemini model, a separate 256K bucket for the
+    // Gemma family. The round 1_000_000 that used to sit here reported the
+    // gauge ~4.9% high.
     if normalized.starts_with("gemini") {
-        return Some(1_000_000);
+        return Some(1_048_576);
+    }
+    if normalized.starts_with("gemma") {
+        return Some(256_000);
     }
     if normalized.starts_with("kimi") {
         return Some(262_144);
@@ -2068,9 +2085,14 @@ mod tests {
             infer_context_window_max_tokens(Some("claude-sonnet-4-6")),
             Some(200_000)
         );
+        // gemini-cli's `tokenLimit()` is 1 << 20, not a round million.
         assert_eq!(
             infer_context_window_max_tokens(Some("gemini-2.5-pro")),
-            Some(1_000_000)
+            Some(1_048_576)
+        );
+        assert_eq!(
+            infer_context_window_max_tokens(Some("gemma-4-31b-it")),
+            Some(256_000)
         );
         assert_eq!(
             infer_context_window_max_tokens(Some("claude-sonnet-4-6 [1.5M]")),
