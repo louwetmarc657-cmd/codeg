@@ -249,6 +249,8 @@
     "appLanguage": "应用语言",
     "languageSaveSuccess": "语言设置已保存",
     "languageSaveFailed": "语言设置保存失败：{message}",
+    "dataTitle": "数据与同步",
+    "dataDescription": "「配置同步」在设备之间搬运设置；「备份」打包这台设备上的全部 codeg 数据。",
     "updateTitle": "应用升级",
     "versionTitle": "软件更新",
     "updateDescription": "点击检查后会从配置的发布源拉取最新版本信息，有新版本时可直接下载并安装。",
@@ -3045,6 +3047,8 @@
         "tasks": {
           "connectingTitle": "正在连接 {agent}",
           "connectingDescription": "正在建立连接",
+          "preparingTitle": "正在准备 {agent} 会话",
+          "preparingDescription": "正在读取历史会话记录",
           "loadingSelectorsTitle": "正在加载 {agent} 选择项",
           "loadingSelectorsDescription": "正在获取模式和会话配置选项",
           "initSessionTitle": "正在初始化 {agent} 会话",
@@ -3143,7 +3147,9 @@
         "saveEdit": "保存",
         "cancelEdit": "取消编辑",
         "editItem": "编辑",
-        "deleteItem": "删除"
+        "deleteItem": "删除",
+        "steerItemNow": "插入当前回合",
+        "steerItemAsNote": "作为留言，供下次检查时读取"
       },
       "welcomeInputPanel": {
         "agentsSettingsPath": "设置 > Agents",
@@ -4058,6 +4064,13 @@
     "errorLoadingDir": "加载目录失败",
     "selectedCount": "已选 {count} 项"
   },
+  "BranchPicker": {
+    "searchPlaceholder": "搜索分支…",
+    "none": "无分支",
+    "local": "本地",
+    "remote": "远程",
+    "useCustom": "使用 “{query}”"
+  },
   "ChatChannelSettings": {
     "loading": "加载中...",
     "sectionTitle": "消息渠道",
@@ -4646,13 +4659,12 @@
     "connectionExpired": "远端连接“{name}”已失效。请更新 Token 后重新加载此窗口。"
   },
   "BackupSettings": {
-    "title": "备份与恢复",
-    "description": "导出一份可移植的 codeg 数据备份，或从备份中恢复。",
     "tabs": {
       "backup": "备份",
       "restore": "恢复"
     },
     "export": {
+      "description": "把这台设备的 codeg 数据（数据库与上传文件）打包成一个归档文件。",
       "includeExternal": "包含会话内容",
       "includeExternalHint": "同时打包各 CLI 的会话记录（Claude、Codex、Gemini 等），体积更大。",
       "passphrase": "口令（可选）",
@@ -4675,6 +4687,7 @@
       }
     },
     "restore": {
+      "description": "用备份归档中的内容替换这台设备当前的 codeg 数据。",
       "selectFile": "选择备份文件",
       "passphrasePrompt": "该备份已加密，请输入其口令。",
       "unlock": "解锁",
@@ -4742,6 +4755,105 @@
       "rollbackConfirmBody": "这会用该快照替换当前数据并重启。被替换的数据会先做快照。"
     }
   },
+  "ConfigSyncSettings": {
+    "title": "配置同步",
+    "scopeTitle": "同步范围",
+    "scopeIncludedTitle": "包含",
+    "scopeExcludedTitle": "不包含",
+    "scopeIncluded": {
+      "providers": "模型服务商（含 API 密钥）",
+      "agentSettings": "智能体设置",
+      "customAgents": "自定义智能体",
+      "quickMessages": "快捷消息",
+      "taskTemplates": "任务模板",
+      "preferences": "应用偏好（语言、外观、开关）"
+    },
+    "scopeExcluded": {
+      "conversations": "会话记录与历史",
+      "uploads": "上传的文件与图片",
+      "workspaces": "工作区项目与路径",
+      "mcp": "MCP 服务器（归各 CLI 自己管）",
+      "credentials": "登录凭据与令牌"
+    },
+    "fileTitle": "配置文件",
+    "exportButton": "导出到文件",
+    "importButton": "从文件导入",
+    "fileHint": "导出为单个 JSON 文件，可拷贝到另一台设备。导入时按条目新增或更新，文件中没有的本地条目会保留。",
+    "webdavTitle": "WebDAV 同步",
+    "webdavHint": "把配置快照上传到你自己的 WebDAV 服务器。",
+    "presetLabel": "服务商",
+    "preset": {
+      "jianguoyun": "坚果云",
+      "nextcloud": "Nextcloud",
+      "synology": "群晖 NAS",
+      "custom": "自定义"
+    },
+    "presetHint": {
+      "jianguoyun": "坚果云需要在「安全选项」里生成应用密码，不能用登录密码。",
+      "nextcloud": "把域名和用户名换成你自己的，密码用「设置 → 安全」里生成的应用密码。",
+      "synology": "需要在 DSM 套件中心安装并启用 WebDAV Server，默认端口 5005（HTTP）/ 5006（HTTPS）。"
+    },
+    "serverUrl": "服务器地址",
+    "username": "用户名",
+    "password": "密码",
+    "passwordKeep": "留空则沿用已保存的密码",
+    "passwordPlaceholder": "应用密码",
+    "remoteDir": "远程目录",
+    "profile": "配置集",
+    "profileHint": "使用相同配置集的设备共享同一份配置；想区分工作与个人环境时可以分开命名。",
+    "autoSyncLabel": "自动上传",
+    "autoSyncHint": "定期检查，只在配置发生变化时上传。",
+    "intervalLabel": "检查间隔",
+    "intervalOption": "每 {minutes} 分钟",
+    "saveButton": "保存",
+    "testButton": "测试连接",
+    "uploadButton": "立即同步",
+    "restoreButton": "从远程恢复",
+    "saved": "同步设置已保存",
+    "testSucceeded": "已成功连接 WebDAV 服务器",
+    "uploaded": "配置已上传",
+    "exported": "配置已导出",
+    "restored": "已应用 {count} 条配置",
+    "imported": "已应用 {count} 条配置",
+    "noRemoteSnapshot": "服务器上还没有配置快照",
+    "lastSyncAt": "上次同步：{time}",
+    "neverSynced": "尚未同步",
+    "lastError": "上次错误：{message}",
+    "working": "处理中…",
+    "plaintextWarning": "快照以明文上传且包含 API 密钥，请只使用只有你能访问的 WebDAV 服务器。同步凭据本身不会写入快照。",
+    "importConfirmTitle": "导入配置？",
+    "importConfirmBody": "文件中的条目将在本机新增或更新，文件未涉及的本地条目会保留。",
+    "restartHint": "部分改动（外观、语言、服务商列表）需要重启 codeg 后才会生效。",
+    "importConfirmAction": "导入",
+    "restoreConfirmTitle": "从远程恢复？",
+    "restoreConfirmBody": "将把 {device} 在 {time} 上传的快照应用到本机，快照未涉及的本地条目会保留。",
+    "restoreConfirmAction": "恢复",
+    "cancel": "取消",
+    "emptySnapshot": "这份快照里没有任何配置条目。",
+    "domain": {
+      "modelProviders": "{count} 个模型服务商",
+      "agentSettings": "{count} 项智能体设置",
+      "customAgents": "{count} 个自定义智能体",
+      "quickMessages": "{count} 条快捷消息",
+      "taskTemplates": "{count} 个任务模板",
+      "preferences": "{count} 项应用偏好"
+    },
+    "rollbackTitle": "撤销导入",
+    "rollbackHint": "每次导入和每次还原前，都会先保存这台设备当时的配置，最近十份会保留下来。",
+    "rollbackAction": "撤销",
+    "rollbackUnknownTime": "时间未知",
+    "rollbackConfirmTitle": "回到这份配置？",
+    "rollbackConfirmBody": "这会用 {time} 保存的那份副本替换当前配置。当前配置会先被保存下来，所以这一步同样可以撤销。",
+    "rollbackConfirmAction": "撤销",
+    "rolledBack": "已恢复 {count} 条配置",
+    "encryptLabel": "加密快照",
+    "encryptHint": "用口令保护上传的文件。参与同步的每台设备都要使用同一个口令。",
+    "encryptedNotice": "快照会先用你的口令加密再上传。口令一旦丢失，服务器上的那份副本将无法恢复。",
+    "passphrase": "加密口令",
+    "passphraseKeep": "留空则沿用已保存的口令",
+    "passphrasePlaceholder": "加密口令",
+    "passphraseHint": "只保存在这台设备的钥匙串里，不会上传。请在你的其他设备上输入同一个口令。"
+  },
   "backup": {
     "restore": {
       "error": {
@@ -4755,6 +4867,27 @@
     "error": {
       "diskSpace": "磁盘空间不足，无法完成操作。",
       "cancelled": "操作已取消。"
+    }
+  },
+  "configSync": {
+    "error": {
+      "newerSchema": "这份快照由更新版本的 codeg 创建（格式 {snapshotVersion}），当前版本最高支持格式 {appVersion}。",
+      "checksum": "快照与校验值不符，可能不完整。",
+      "invalidSnapshot": "这不是有效的 codeg 配置快照文件。",
+      "noRemoteSnapshot": "服务器上还没有配置快照。",
+      "notConfigured": "请先完成 WebDAV 服务器配置再同步。",
+      "unauthorized": "WebDAV 服务器拒绝了该用户名或密码。",
+      "forbidden": "WebDAV 服务器拒绝访问该目录。",
+      "remotePath": "远程目录或配置集名称无效。",
+      "quota": "WebDAV 服务器已无可用空间。",
+      "network": "无法连接到 WebDAV 服务器。",
+      "server": "WebDAV 服务器返回错误（{status}）。",
+      "passphraseRequired": "该快照已加密，请先设置加密口令再同步。",
+      "badPassphrase": "无法解密该快照。请检查口令，也可能是文件已损坏。",
+      "badDomain": "无法读取该快照中的 {domain} 部分。",
+      "noRollback": "这台设备上已经没有那份保存的配置了。",
+      "credentialsUnreadable": "无法读取已保存的凭据。请解锁系统钥匙串后重试。",
+      "notEncrypted": "服务器上的快照未加密，但本机已开启加密。请从本机上传以替换它，或关闭加密后再使用。"
     }
   },
   "WebConnection": {
@@ -5039,12 +5172,7 @@
     "cronApply": "应用",
     "cronPreviewLabel": "预览",
     "cronOpenBuilder": "打开计划生成器",
-    "branchDefault": "默认分支",
-    "branchUseCustom": "使用 “{query}”",
-    "branchLocal": "本地",
-    "branchRemote": "远程",
-    "branchSearchPlaceholder": "搜索分支…",
-    "branchNone": "无分支"
+    "branchDefault": "默认分支"
   },
   "Tasks": {
     "title": "待办任务",
@@ -5175,6 +5303,10 @@
     "promptLabel": "任务描述",
     "promptPlaceholder": "向 agent 描述任务——输入 @ 可引用文件，/ 可唤起命令",
     "folderPlaceholder": "选择文件夹",
+    "baseBranch": "基准分支",
+    "baseBranchPlaceholder": "当前分支",
+    "baseBranchDefault": "任务开始时的当前分支",
+    "baseBranchHint": "任务从该分支拉出工作树，合并时也落回该分支。",
     "agentInheritedHint": "继承自任务设置，修改后仅对本任务生效",
     "agentOverrideReset": "恢复继承",
     "sectionTarget": "目标",

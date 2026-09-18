@@ -249,6 +249,8 @@
     "appLanguage": "لغة التطبيق",
     "languageSaveSuccess": "تم حفظ إعدادات اللغة",
     "languageSaveFailed": "فشل حفظ إعدادات اللغة: {message}",
+    "dataTitle": "البيانات والمزامنة",
+    "dataDescription": "تنقل مزامنة الإعدادات إعداداتك بين الأجهزة، بينما يحزم النسخ الاحتياطي كل بيانات codeg على هذا الجهاز.",
     "updateTitle": "تحديث التطبيق",
     "versionTitle": "تحديث البرنامج",
     "updateDescription": "تحقق من المصدر المهيأ للإصدارات الأحدث وثبّت التحديث مباشرة عند توفره.",
@@ -3045,6 +3047,8 @@
         "tasks": {
           "connectingTitle": "جارٍ الاتصال بـ {agent}",
           "connectingDescription": "جارٍ إنشاء الاتصال",
+          "preparingTitle": "جارٍ تحضير جلسة {agent}",
+          "preparingDescription": "جارٍ قراءة سجل المحادثة",
           "loadingSelectorsTitle": "جارٍ تحميل محددات {agent}",
           "loadingSelectorsDescription": "جارٍ جلب خيارات الوضع وإعدادات الجلسة",
           "initSessionTitle": "جارٍ تهيئة جلسة {agent}",
@@ -3138,7 +3142,9 @@
         "saveEdit": "حفظ",
         "cancelEdit": "إلغاء التعديل",
         "editItem": "تعديل",
-        "deleteItem": "حذف"
+        "deleteItem": "حذف",
+        "steerItemNow": "إدراج في الدور الحالي",
+        "steerItemAsNote": "إرسال كملاحظة للفحص التالي"
       },
       "welcomeInputPanel": {
         "agentsSettingsPath": "الإعدادات > الوكلاء",
@@ -4640,14 +4646,20 @@
     "errorLoadingDir": "فشل تحميل المجلد",
     "selectedCount": "{count} محدد"
   },
+  "BranchPicker": {
+    "searchPlaceholder": "بحث في الفروع…",
+    "none": "لا توجد فروع",
+    "local": "محلي",
+    "remote": "بعيد",
+    "useCustom": "استخدام \"{query}\""
+  },
   "BackupSettings": {
-    "title": "النسخ الاحتياطي والاستعادة",
-    "description": "صدّر نسخة احتياطية محمولة من بيانات codeg، أو استعد من نسخة.",
     "tabs": {
       "backup": "نسخ احتياطي",
       "restore": "استعادة"
     },
     "export": {
+      "description": "يحزم بيانات codeg على هذا الجهاز — قاعدة البيانات والملفات المرفوعة — في أرشيف واحد.",
       "includeExternal": "تضمين محتوى المحادثات",
       "includeExternalHint": "يؤرشف أيضًا سجلات محادثات أدوات CLI (Claude وCodex وGemini …). يزيد الحجم.",
       "passphrase": "عبارة المرور (اختياري)",
@@ -4670,6 +4682,7 @@
       }
     },
     "restore": {
+      "description": "يستبدل بيانات codeg على هذا الجهاز بمحتويات أرشيف النسخ الاحتياطي.",
       "selectFile": "اختر ملف النسخة الاحتياطية",
       "passphrasePrompt": "هذه النسخة مشفّرة. أدخل عبارة المرور الخاصة بها.",
       "unlock": "فتح القفل",
@@ -4737,6 +4750,105 @@
       "rollbackConfirmBody": "سيستبدل هذا بياناتك الحالية باللقطة ثم يعيد التشغيل. تُؤخذ لقطة من البيانات المستبدَلة أولًا."
     }
   },
+  "ConfigSyncSettings": {
+    "title": "مزامنة الإعدادات",
+    "scopeTitle": "ما الذي تتم مزامنته",
+    "scopeIncludedTitle": "مشمول",
+    "scopeExcludedTitle": "غير مشمول",
+    "scopeIncluded": {
+      "providers": "مزوّدو النماذج (مع مفاتيح API)",
+      "agentSettings": "إعدادات الوكلاء",
+      "customAgents": "الوكلاء المخصصون",
+      "quickMessages": "الرسائل السريعة",
+      "taskTemplates": "قوالب المهام",
+      "preferences": "تفضيلات التطبيق (اللغة والمظهر والخيارات)"
+    },
+    "scopeExcluded": {
+      "conversations": "المحادثات والسجل",
+      "uploads": "الملفات والصور المرفوعة",
+      "workspaces": "مشاريع مساحة العمل ومساراتها",
+      "mcp": "خوادم MCP (تديرها كل أداة CLI)",
+      "credentials": "بيانات الدخول والرموز"
+    },
+    "fileTitle": "ملف الإعدادات",
+    "exportButton": "تصدير إلى ملف",
+    "importButton": "استيراد من ملف",
+    "fileHint": "يُنشئ ملف JSON واحدًا يمكنك نقله إلى جهاز آخر. عند الاستيراد تُضاف العناصر أو تُحدّث، وتبقى العناصر الموجودة غير المذكورة في الملف كما هي.",
+    "webdavTitle": "مزامنة WebDAV",
+    "webdavHint": "ارفع لقطة الإعدادات إلى خادم WebDAV الخاص بك.",
+    "presetLabel": "الخادم",
+    "preset": {
+      "jianguoyun": "Jianguoyun",
+      "nextcloud": "Nextcloud",
+      "synology": "Synology NAS",
+      "custom": "مخصص"
+    },
+    "presetHint": {
+      "jianguoyun": "يتطلب Jianguoyun كلمة مرور تطبيق تُنشأ من إعدادات الأمان، وليس كلمة مرور الدخول.",
+      "nextcloud": "استبدل النطاق واسم المستخدم، ثم استخدم كلمة مرور تطبيق من الإعدادات ← الأمان.",
+      "synology": "فعّل WebDAV Server من مركز الحزم في DSM؛ المنافذ الافتراضية هي 5005 (HTTP) و 5006 (HTTPS)."
+    },
+    "serverUrl": "عنوان الخادم",
+    "username": "اسم المستخدم",
+    "password": "كلمة المرور",
+    "passwordKeep": "اتركه فارغًا للإبقاء على كلمة المرور المحفوظة",
+    "passwordPlaceholder": "كلمة مرور التطبيق",
+    "remoteDir": "المجلد البعيد",
+    "profile": "الملف التعريفي",
+    "profileHint": "الأجهزة التي تشترك في الملف التعريفي نفسه تتشارك إعدادًا واحدًا. استخدم ملفات مختلفة لفصل العمل عن الاستخدام الشخصي.",
+    "autoSyncLabel": "الرفع تلقائيًا",
+    "autoSyncHint": "يتحقق دوريًا ويرفع فقط عند تغير الإعدادات.",
+    "intervalLabel": "فاصل التحقق",
+    "intervalOption": "كل {minutes} دقيقة",
+    "saveButton": "حفظ",
+    "testButton": "اختبار الاتصال",
+    "uploadButton": "مزامنة الآن",
+    "restoreButton": "استعادة من الخادم",
+    "saved": "تم حفظ إعدادات المزامنة",
+    "testSucceeded": "تم الاتصال بخادم WebDAV",
+    "uploaded": "تم رفع الإعدادات",
+    "exported": "تم تصدير الإعدادات",
+    "restored": "{count, plural, one {تم تطبيق عنصر واحد} other {تم تطبيق # عنصرًا}}",
+    "imported": "{count, plural, one {تم تطبيق عنصر واحد} other {تم تطبيق # عنصرًا}}",
+    "noRemoteSnapshot": "لا توجد بعد لقطة إعدادات على الخادم",
+    "lastSyncAt": "آخر مزامنة: {time}",
+    "neverSynced": "لم تتم المزامنة بعد",
+    "lastError": "آخر خطأ: {message}",
+    "working": "جارٍ التنفيذ…",
+    "plaintextWarning": "تُرفع اللقطة دون تشفير وتتضمن مفاتيح API، لذا استخدم خادم WebDAV لا يصل إليه سواك. أما بيانات اعتماد المزامنة نفسها فلا تُدرج أبدًا في اللقطة.",
+    "importConfirmTitle": "استيراد الإعدادات؟",
+    "importConfirmBody": "ستُضاف عناصر الملف أو تُحدّث على هذا الجهاز، وتبقى العناصر الموجودة غير المذكورة في الملف.",
+    "restartHint": "تسري بعض التغييرات — المظهر واللغة وقائمة المزوّدين — بعد إعادة تشغيل codeg.",
+    "importConfirmAction": "استيراد",
+    "restoreConfirmTitle": "الاستعادة من الخادم؟",
+    "restoreConfirmBody": "ستُطبّق على هذا الجهاز اللقطة المأخوذة من {device} بتاريخ {time}، وتبقى العناصر الموجودة غير المذكورة في اللقطة.",
+    "restoreConfirmAction": "استعادة",
+    "cancel": "إلغاء",
+    "emptySnapshot": "لا تحتوي هذه اللقطة على أي عناصر إعدادات.",
+    "domain": {
+      "modelProviders": "{count, plural, one {مزود نماذج واحد} other {# مزود نماذج}}",
+      "agentSettings": "{count, plural, one {إعداد وكيل واحد} other {# إعداد وكيل}}",
+      "customAgents": "{count, plural, one {وكيل مخصص واحد} other {# وكيل مخصص}}",
+      "quickMessages": "{count, plural, one {رسالة سريعة واحدة} other {# رسالة سريعة}}",
+      "taskTemplates": "{count, plural, one {قالب مهمة واحد} other {# قالب مهمة}}",
+      "preferences": "{count, plural, one {تفضيل واحد} other {# تفضيل}}"
+    },
+    "rollbackTitle": "التراجع عن استيراد",
+    "rollbackHint": "يحفظ كل استيراد وكل استعادة حالة هذا الجهاز قبل التطبيق، ويُحتفظ بآخر عشر نسخ.",
+    "rollbackAction": "تراجع",
+    "rollbackUnknownTime": "الوقت غير معروف",
+    "rollbackConfirmTitle": "العودة إلى هذا الإعداد؟",
+    "rollbackConfirmBody": "سيحل محل الإعداد الحالي النسخةُ المحفوظة في {time}. يُحفظ الإعداد الحالي أولًا، لذا يمكن التراجع عن هذه الخطوة أيضًا.",
+    "rollbackConfirmAction": "تراجع",
+    "rolledBack": "{count, plural, one {تمت استعادة عنصر واحد} other {تمت استعادة # عنصرًا}}",
+    "encryptLabel": "تشفير اللقطة",
+    "encryptHint": "احمِ الملف المرفوع بعبارة مرور. تحتاج كل الأجهزة المتزامنة إلى العبارة نفسها.",
+    "encryptedNotice": "تُشفَّر اللقطة بعبارة المرور قبل رفعها. إذا فقدت العبارة تعذّرت استعادة النسخة الموجودة على الخادم.",
+    "passphrase": "عبارة المرور",
+    "passphraseKeep": "اتركه فارغًا للإبقاء على عبارة المرور المحفوظة",
+    "passphrasePlaceholder": "عبارة مرور التشفير",
+    "passphraseHint": "تُحفظ في سلسلة مفاتيح هذا الجهاز ولا تُرفع أبدًا. أدخل العبارة نفسها على أجهزتك الأخرى."
+  },
   "backup": {
     "restore": {
       "error": {
@@ -4750,6 +4862,27 @@
     "error": {
       "diskSpace": "لا توجد مساحة قرص كافية لإكمال العملية.",
       "cancelled": "تم إلغاء العملية."
+    }
+  },
+  "configSync": {
+    "error": {
+      "newerSchema": "أُنشئت هذه اللقطة بإصدار أحدث من codeg (الصيغة {snapshotVersion})؛ وهذا الإصدار يدعم الصيغة {appVersion} كحد أقصى.",
+      "checksum": "اللقطة لا تطابق مجموع التحقق وقد تكون ناقصة.",
+      "invalidSnapshot": "هذا الملف ليس لقطة إعدادات codeg صالحة.",
+      "noRemoteSnapshot": "لا توجد بعد لقطة إعدادات على الخادم.",
+      "notConfigured": "أعدِدّ خادم WebDAV قبل المزامنة.",
+      "unauthorized": "رفض خادم WebDAV اسم المستخدم أو كلمة المرور.",
+      "forbidden": "منع خادم WebDAV الوصول إلى هذا المجلد.",
+      "remotePath": "المجلد البعيد أو اسم الملف التعريفي غير صالح.",
+      "quota": "لم تعد هناك مساحة على خادم WebDAV.",
+      "network": "تعذر الوصول إلى خادم WebDAV.",
+      "server": "أعاد خادم WebDAV خطأ ({status}).",
+      "passphraseRequired": "هذه اللقطة مشفَّرة. اضبط عبارة مرور التشفير قبل المزامنة.",
+      "badPassphrase": "تعذّر فك تشفير اللقطة. تحقق من عبارة المرور، وقد يكون الملف تالفًا أيضًا.",
+      "badDomain": "تعذّرت قراءة قسم {domain} من هذه اللقطة.",
+      "noRollback": "لم يعد ذلك الإعداد المحفوظ موجودًا على هذا الجهاز.",
+      "credentialsUnreadable": "تعذّرت قراءة بيانات الاعتماد المحفوظة. افتح قفل سلسلة مفاتيح النظام ثم أعد المحاولة.",
+      "notEncrypted": "اللقطة الموجودة على الخادم غير مشفّرة، لكن التشفير مُفعّل على هذا الجهاز. ارفع نسخة من هذا الجهاز لاستبدالها، أو أوقف التشفير لاستخدامها."
     }
   },
   "WebConnection": {
@@ -5034,12 +5167,7 @@
     "cronApply": "تطبيق",
     "cronPreviewLabel": "معاينة",
     "cronOpenBuilder": "فتح منشئ الجدولة",
-    "branchDefault": "الفرع الافتراضي",
-    "branchUseCustom": "استخدام \"{query}\"",
-    "branchLocal": "محلي",
-    "branchRemote": "بعيد",
-    "branchSearchPlaceholder": "بحث في الفروع…",
-    "branchNone": "لا توجد فروع"
+    "branchDefault": "الفرع الافتراضي"
   },
   "Tasks": {
     "title": "المهام قيد الانتظار",
@@ -5170,6 +5298,10 @@
     "promptLabel": "وصف المهمة",
     "promptPlaceholder": "صف المهمة للوكيل — استخدم @ للإشارة إلى الملفات و / للأوامر",
     "folderPlaceholder": "اختر مجلدًا",
+    "baseBranch": "الفرع الأساسي",
+    "baseBranchPlaceholder": "الفرع الحالي",
+    "baseBranchDefault": "الفرع الحالي عند بدء المهمة",
+    "baseBranchHint": "تتفرّع المهمة من هذا الفرع، ويعيدها الدمج إليه.",
     "agentInheritedHint": "موروث من إعدادات المهام — عدِّله ليصبح خاصًا بهذه المهمة",
     "agentOverrideReset": "العودة إلى الوراثة",
     "sectionTarget": "الهدف",

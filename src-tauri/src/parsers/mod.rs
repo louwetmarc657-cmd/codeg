@@ -874,6 +874,18 @@ pub fn infer_context_window_max_tokens(model: Option<&str>) -> Option<u64> {
         return Some(256_000);
     }
     if normalized.starts_with("kimi") {
+        // The k3 family is the 1M lane; k2.x and everything older is 256K.
+        // Source of truth is the models.dev catalog kimi-code bundles itself
+        // (`app/kosongConfig/builtInModelsDev.ts`): under Moonshot's own
+        // `moonshotai` provider, `kimi-k3` is 1048576 while `kimi-k2.6` /
+        // `kimi-k2.7-code` / `kimi-k2.7-code-highspeed` are all 262144, and
+        // across every third-party provider in that catalog the `kimi-k3*` ids
+        // cluster on 1048576 (a handful round it to 1000000). Only the HISTORY
+        // gauge lands here — a live Kimi session gets the real window from the
+        // agent's own `usage_update {used, size}` frame.
+        if normalized.starts_with("kimi-k3") {
+            return Some(1_048_576);
+        }
         return Some(262_144);
     }
     if normalized.starts_with("grok") {
@@ -2160,6 +2172,34 @@ mod tests {
         assert_eq!(
             infer_context_window_max_tokens(Some("gpt-5.6-sol")),
             Some(258_000)
+        );
+        // Kimi's k3 family is the 1M lane; k2.x stays on 256K. The provider
+        // prefix and the `:tag` suffix are stripped before matching, and the
+        // whole id is lowercased, so the catalog's `Kimi-K3-TEE` /
+        // `moonshotai/kimi-k3` / `kimi-k3:fast` spellings all land on 1M.
+        assert_eq!(
+            infer_context_window_max_tokens(Some("kimi-k3")),
+            Some(1_048_576)
+        );
+        assert_eq!(
+            infer_context_window_max_tokens(Some("moonshotai/kimi-k3")),
+            Some(1_048_576)
+        );
+        assert_eq!(
+            infer_context_window_max_tokens(Some("kimi-k3:fast")),
+            Some(1_048_576)
+        );
+        assert_eq!(
+            infer_context_window_max_tokens(Some("Kimi-K3-TEE")),
+            Some(1_048_576)
+        );
+        assert_eq!(
+            infer_context_window_max_tokens(Some("kimi-k2.7-code")),
+            Some(262_144)
+        );
+        assert_eq!(
+            infer_context_window_max_tokens(Some("kimi-k2.6")),
+            Some(262_144)
         );
         assert_eq!(infer_context_window_max_tokens(Some("unknown-model")), None);
     }

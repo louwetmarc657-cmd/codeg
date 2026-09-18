@@ -249,6 +249,8 @@
     "appLanguage": "アプリ言語",
     "languageSaveSuccess": "言語設定を保存しました",
     "languageSaveFailed": "言語設定の保存に失敗しました: {message}",
+    "dataTitle": "データと同期",
+    "dataDescription": "「設定同期」は設定をマシン間で持ち運び、「バックアップ」はこのマシンの codeg データをまるごとまとめます。",
     "updateTitle": "アプリ更新",
     "versionTitle": "ソフトウェアアップデート",
     "updateDescription": "設定されたリリースソースで新しいバージョンを確認し、利用可能なら直接インストールします。",
@@ -3045,6 +3047,8 @@
         "tasks": {
           "connectingTitle": "{agent} に接続中",
           "connectingDescription": "接続を確立しています",
+          "preparingTitle": "{agent} セッションを準備中",
+          "preparingDescription": "会話履歴を読み込んでいます",
           "loadingSelectorsTitle": "{agent} のセレクターを読み込み中",
           "loadingSelectorsDescription": "モードとセッション設定オプションを取得しています",
           "initSessionTitle": "{agent} セッションを初期化中",
@@ -3138,7 +3142,9 @@
         "saveEdit": "保存",
         "cancelEdit": "編集をキャンセル",
         "editItem": "編集",
-        "deleteItem": "削除"
+        "deleteItem": "削除",
+        "steerItemNow": "現在のターンに挿入",
+        "steerItemAsNote": "メモとして送信し次回チェック時に読ませる"
       },
       "welcomeInputPanel": {
         "agentsSettingsPath": "設定 > エージェント",
@@ -4640,14 +4646,20 @@
     "errorLoadingDir": "ディレクトリの読み込みに失敗しました",
     "selectedCount": "{count} 件選択中"
   },
+  "BranchPicker": {
+    "searchPlaceholder": "ブランチを検索…",
+    "none": "ブランチがありません",
+    "local": "ローカル",
+    "remote": "リモート",
+    "useCustom": "「{query}」を使用"
+  },
   "BackupSettings": {
-    "title": "バックアップと復元",
-    "description": "codeg データのポータブルなバックアップを書き出すか、バックアップから復元します。",
     "tabs": {
       "backup": "バックアップ",
       "restore": "復元"
     },
     "export": {
+      "description": "このマシンの codeg データ（データベースとアップロードしたファイル）を 1 つのアーカイブにまとめます。",
       "includeExternal": "会話内容を含める",
       "includeExternalHint": "各 CLI の会話履歴（Claude、Codex、Gemini など）も保存します。サイズが増えます。",
       "passphrase": "パスフレーズ（任意）",
@@ -4670,6 +4682,7 @@
       }
     },
     "restore": {
+      "description": "このマシンの codeg データをバックアップアーカイブの内容で置き換えます。",
       "selectFile": "バックアップファイルを選択",
       "passphrasePrompt": "このバックアップは暗号化されています。パスフレーズを入力してください。",
       "unlock": "ロック解除",
@@ -4737,6 +4750,105 @@
       "rollbackConfirmBody": "現在のデータをこのスナップショットで置き換えて再起動します。置き換えられるデータは先にスナップショットが取られます。"
     }
   },
+  "ConfigSyncSettings": {
+    "title": "設定同期",
+    "scopeTitle": "同期される範囲",
+    "scopeIncludedTitle": "含まれるもの",
+    "scopeExcludedTitle": "含まれないもの",
+    "scopeIncluded": {
+      "providers": "モデルプロバイダー（API キーを含む）",
+      "agentSettings": "エージェント設定",
+      "customAgents": "カスタムエージェント",
+      "quickMessages": "クイックメッセージ",
+      "taskTemplates": "タスクテンプレート",
+      "preferences": "アプリ設定（言語・外観・切り替え）"
+    },
+    "scopeExcluded": {
+      "conversations": "会話履歴",
+      "uploads": "アップロードしたファイルと画像",
+      "workspaces": "ワークスペースのプロジェクトとパス",
+      "mcp": "MCP サーバー（各 CLI が管理）",
+      "credentials": "ログイン認証情報とトークン"
+    },
+    "fileTitle": "設定ファイル",
+    "exportButton": "ファイルに書き出す",
+    "importButton": "ファイルから読み込む",
+    "fileHint": "他のマシンに持ち運べる JSON ファイルを 1 つ作成します。読み込みでは項目を追加・更新し、ファイルにない既存項目は残ります。",
+    "webdavTitle": "WebDAV 同期",
+    "webdavHint": "設定スナップショットを自分の WebDAV サーバーにアップロードします。",
+    "presetLabel": "サーバー",
+    "preset": {
+      "jianguoyun": "Jianguoyun",
+      "nextcloud": "Nextcloud",
+      "synology": "Synology NAS",
+      "custom": "カスタム"
+    },
+    "presetHint": {
+      "jianguoyun": "Jianguoyun ではログインパスワードではなく、セキュリティ設定で作成するアプリパスワードが必要です。",
+      "nextcloud": "ドメインとユーザー名を置き換え、「設定 → セキュリティ」のアプリパスワードを使います。",
+      "synology": "DSM パッケージセンターで WebDAV Server を有効にします。既定ポートは 5005（HTTP）/ 5006（HTTPS）です。"
+    },
+    "serverUrl": "サーバー URL",
+    "username": "ユーザー名",
+    "password": "パスワード",
+    "passwordKeep": "空のままにすると保存済みのパスワードを使います",
+    "passwordPlaceholder": "アプリパスワード",
+    "remoteDir": "リモートフォルダー",
+    "profile": "プロファイル",
+    "profileHint": "同じプロファイルを使うマシンは同じ設定を共有します。仕事用と個人用を分けたい場合は別のプロファイル名にしてください。",
+    "autoSyncLabel": "自動でアップロード",
+    "autoSyncHint": "定期的に確認し、設定が変わったときだけ送信します。",
+    "intervalLabel": "確認間隔",
+    "intervalOption": "{minutes} 分ごと",
+    "saveButton": "保存",
+    "testButton": "接続テスト",
+    "uploadButton": "今すぐ同期",
+    "restoreButton": "リモートから復元",
+    "saved": "同期設定を保存しました",
+    "testSucceeded": "WebDAV サーバーに接続できました",
+    "uploaded": "設定をアップロードしました",
+    "exported": "設定を書き出しました",
+    "restored": "{count} 件の設定を適用しました",
+    "imported": "{count} 件の設定を適用しました",
+    "noRemoteSnapshot": "サーバーにはまだ設定スナップショットがありません",
+    "lastSyncAt": "最終同期：{time}",
+    "neverSynced": "まだ同期していません",
+    "lastError": "前回のエラー：{message}",
+    "working": "処理中…",
+    "plaintextWarning": "スナップショットは暗号化せずに送信され、API キーも含まれます。自分だけがアクセスできる WebDAV サーバーを使ってください。同期用の認証情報自体は含まれません。",
+    "importConfirmTitle": "設定を読み込みますか？",
+    "importConfirmBody": "ファイルの項目がこのマシンに追加・更新されます。ファイルにない既存項目はそのまま残ります。",
+    "restartHint": "外観・言語・プロバイダー一覧などの一部の変更は、codeg を再起動すると反映されます。",
+    "importConfirmAction": "読み込む",
+    "restoreConfirmTitle": "リモートから復元しますか？",
+    "restoreConfirmBody": "{device} が {time} に作成したスナップショットをこのマシンに適用します。スナップショットにない既存項目は残ります。",
+    "restoreConfirmAction": "復元",
+    "cancel": "キャンセル",
+    "emptySnapshot": "このスナップショットに設定項目はありません。",
+    "domain": {
+      "modelProviders": "モデルプロバイダー {count} 件",
+      "agentSettings": "エージェント設定 {count} 件",
+      "customAgents": "カスタムエージェント {count} 件",
+      "quickMessages": "クイックメッセージ {count} 件",
+      "taskTemplates": "タスクテンプレート {count} 件",
+      "preferences": "アプリ設定 {count} 件"
+    },
+    "rollbackTitle": "インポートを元に戻す",
+    "rollbackHint": "インポートと復元のたびに、直前のこのマシンの設定を保存します。最新の 10 件が残ります。",
+    "rollbackAction": "元に戻す",
+    "rollbackUnknownTime": "時刻不明",
+    "rollbackConfirmTitle": "この設定に戻しますか？",
+    "rollbackConfirmBody": "現在の設定を {time} に保存されたコピーで置き換えます。現在の設定は先に保存されるので、この操作自体も元に戻せます。",
+    "rollbackConfirmAction": "元に戻す",
+    "rolledBack": "{count} 件の設定を復元しました",
+    "encryptLabel": "スナップショットを暗号化",
+    "encryptHint": "アップロードするファイルをパスフレーズで保護します。同期するすべてのマシンで同じものが必要です。",
+    "encryptedNotice": "スナップショットはアップロード前にパスフレーズで暗号化されます。パスフレーズを失うと、サーバー上のコピーは復元できません。",
+    "passphrase": "パスフレーズ",
+    "passphraseKeep": "空のままにすると保存済みのパスフレーズを使います",
+    "passphrasePlaceholder": "暗号化パスフレーズ",
+    "passphraseHint": "このマシンのキーチェーンにのみ保存され、アップロードされません。他のマシンでも同じパスフレーズを入力してください。"
+  },
   "backup": {
     "restore": {
       "error": {
@@ -4750,6 +4862,27 @@
     "error": {
       "diskSpace": "操作を完了するためのディスク容量が足りません。",
       "cancelled": "操作はキャンセルされました。"
+    }
+  },
+  "configSync": {
+    "error": {
+      "newerSchema": "このスナップショットは新しいバージョンの codeg（形式 {snapshotVersion}）で作成されています。このバージョンは形式 {appVersion} まで対応しています。",
+      "checksum": "スナップショットがチェックサムと一致せず、壊れている可能性があります。",
+      "invalidSnapshot": "このファイルは有効な codeg 設定スナップショットではありません。",
+      "noRemoteSnapshot": "サーバーにはまだ設定スナップショットがありません。",
+      "notConfigured": "同期する前に WebDAV サーバーを設定してください。",
+      "unauthorized": "WebDAV サーバーがユーザー名またはパスワードを拒否しました。",
+      "forbidden": "WebDAV サーバーがこのフォルダーへのアクセスを拒否しました。",
+      "remotePath": "リモートフォルダーまたはプロファイル名が無効です。",
+      "quota": "WebDAV サーバーの空き容量がありません。",
+      "network": "WebDAV サーバーに接続できませんでした。",
+      "server": "WebDAV サーバーがエラーを返しました（{status}）。",
+      "passphraseRequired": "このスナップショットは暗号化されています。同期する前に暗号化パスフレーズを設定してください。",
+      "badPassphrase": "スナップショットを復号できませんでした。パスフレーズを確認してください。ファイルが壊れている可能性もあります。",
+      "badDomain": "このスナップショットの {domain} の部分を読み取れませんでした。",
+      "noRollback": "その保存済みの設定はこのマシンにもう残っていません。",
+      "credentialsUnreadable": "保存された認証情報を読み取れませんでした。システムキーチェーンのロックを解除してから再試行してください。",
+      "notEncrypted": "サーバー上のスナップショットは暗号化されていませんが、このデバイスでは暗号化が有効です。このデバイスからアップロードして置き換えるか、暗号化をオフにして使用してください。"
     }
   },
   "WebConnection": {
@@ -5034,12 +5167,7 @@
     "cronApply": "適用",
     "cronPreviewLabel": "プレビュー",
     "cronOpenBuilder": "スケジュールビルダーを開く",
-    "branchDefault": "デフォルトブランチ",
-    "branchUseCustom": "「{query}」を使用",
-    "branchLocal": "ローカル",
-    "branchRemote": "リモート",
-    "branchSearchPlaceholder": "ブランチを検索…",
-    "branchNone": "ブランチがありません"
+    "branchDefault": "デフォルトブランチ"
   },
   "Tasks": {
     "title": "ToDo タスク",
@@ -5170,6 +5298,10 @@
     "promptLabel": "タスクの説明",
     "promptPlaceholder": "エージェントへの指示を記述 — @ でファイル参照、/ でコマンド",
     "folderPlaceholder": "フォルダを選択",
+    "baseBranch": "ベースブランチ",
+    "baseBranchPlaceholder": "現在のブランチ",
+    "baseBranchDefault": "タスク開始時の現在のブランチ",
+    "baseBranchHint": "タスクはこのブランチから分岐し、マージもこのブランチに戻ります。",
     "agentInheritedHint": "タスク設定から継承 — 変更するとこのタスク専用になります",
     "agentOverrideReset": "継承に戻す",
     "sectionTarget": "ターゲット",

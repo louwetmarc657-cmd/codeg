@@ -526,6 +526,22 @@ async fn async_main() -> ExitCode {
         tokio::spawn(codeg_lib::work_task::run_task_engine(engine));
     }
 
+    // Config-sync uploader (mirrors lib.rs setup): sleeps a minute, then
+    // compares the configuration's hash every interval and uploads only when
+    // it changed. Does nothing at all until a WebDAV endpoint is configured.
+    {
+        let db_for_sync = state.db.conn.clone();
+        let emitter = std::sync::Arc::new(state.emitter.clone());
+        tokio::spawn(async move {
+            codeg_lib::commands::config_sync::auto_sync::run_auto_sync_loop(
+                db_for_sync,
+                emitter,
+                codeg_lib::commands::config_sync::APP_VERSION.to_string(),
+            )
+            .await;
+        });
+    }
+
     // Label worktree folders registered before aliases were seeded at creation
     // with the branch they have checked out (mirrors lib.rs setup). Background;
     // changed folders are broadcast, so a browser that already fetched its

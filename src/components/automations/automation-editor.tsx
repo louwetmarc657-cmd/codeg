@@ -19,7 +19,7 @@ import {
   effectiveSelections,
   snapshotLabels,
 } from "./agent-config-section"
-import { AutomationBranchPicker } from "./automation-branch-picker"
+import { BranchPicker } from "@/components/shared/branch-picker"
 import {
   ComposerInvocationsPopup,
   useComposerInvocations,
@@ -493,7 +493,7 @@ export function AutomationEditor({
               and hides the picker. Enqueued tasks mint their own worktree in
               the work-task engine, so neither control applies. */}
           {action === "launch_session" && isolation === "shared_in_root" ? (
-            <AutomationBranchPicker
+            <BranchPicker
               folderPath={folderPath}
               value={branch}
               onChange={(b, isRemote) => {
@@ -501,6 +501,7 @@ export function AutomationEditor({
                 setIsRemoteBranch(isRemote)
               }}
               placeholder={t("branchPlaceholder")}
+              defaultLabel={t("branchDefault")}
               disabled={folderId == null}
               // shared_in_root checks the branch out in the root tree, which
               // can't track a remote-only branch — the backend rejects that

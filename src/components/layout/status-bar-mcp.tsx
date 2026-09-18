@@ -236,8 +236,11 @@ export function StatusBarMcp() {
     } finally {
       if (!aliveRef.current) return
       setPending((prev) => {
-        const { [key]: _dropped, ...rest } = prev
-        return rest
+        // Delete rather than write `undefined`: the switch row reads
+        // `key in pending` to stay disabled, so the key has to actually go.
+        const next = { ...prev }
+        delete next[key]
+        return next
       })
     }
   }

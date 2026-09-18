@@ -249,6 +249,8 @@
     "appLanguage": "Idioma do app",
     "languageSaveSuccess": "As configurações de idioma foram salvas",
     "languageSaveFailed": "Falha ao salvar as configurações de idioma: {message}",
+    "dataTitle": "Dados e sincronização",
+    "dataDescription": "A sincronização de configuração leva seus ajustes de uma máquina para outra; o backup empacota todos os dados do codeg desta máquina.",
     "updateTitle": "Atualização do app",
     "versionTitle": "Atualização de software",
     "updateDescription": "Verifique versões mais novas na fonte de releases configurada e instale diretamente quando disponíveis.",
@@ -3045,6 +3047,8 @@
         "tasks": {
           "connectingTitle": "Conectando a {agent}",
           "connectingDescription": "Estabelecendo conexão",
+          "preparingTitle": "Preparando a sessão de {agent}",
+          "preparingDescription": "Lendo o histórico da conversa",
           "loadingSelectorsTitle": "Carregando seletores de {agent}",
           "loadingSelectorsDescription": "Buscando opções de modo e configuração de sessão",
           "initSessionTitle": "Initializing {agent} session",
@@ -3138,7 +3142,9 @@
         "saveEdit": "Salvar",
         "cancelEdit": "Cancelar edição",
         "editItem": "Editar",
-        "deleteItem": "Remover"
+        "deleteItem": "Remover",
+        "steerItemNow": "Inserir na vez atual",
+        "steerItemAsNote": "Enviar como nota para a próxima verificação"
       },
       "welcomeInputPanel": {
         "agentsSettingsPath": "Configurações > Agentes",
@@ -4640,14 +4646,20 @@
     "errorLoadingDir": "Falha ao carregar o diretório",
     "selectedCount": "{count} selecionado(s)"
   },
+  "BranchPicker": {
+    "searchPlaceholder": "Pesquisar branches…",
+    "none": "Sem branches",
+    "local": "Local",
+    "remote": "Remoto",
+    "useCustom": "Usar \"{query}\""
+  },
   "BackupSettings": {
-    "title": "Backup e restauração",
-    "description": "Exporte um backup portátil dos seus dados do codeg ou restaure a partir de um.",
     "tabs": {
       "backup": "Backup",
       "restore": "Restauração"
     },
     "export": {
+      "description": "Empacota os dados do codeg desta máquina — banco de dados e arquivos enviados — em um único arquivo.",
       "includeExternal": "Incluir o conteúdo das conversas",
       "includeExternalHint": "Também arquiva as transcrições das CLIs (Claude, Codex, Gemini, …). Aumenta o tamanho.",
       "passphrase": "Senha (opcional)",
@@ -4670,6 +4682,7 @@
       }
     },
     "restore": {
+      "description": "Substitui os dados do codeg desta máquina pelo conteúdo de um arquivo de backup.",
       "selectFile": "Selecionar arquivo de backup",
       "passphrasePrompt": "Este backup está criptografado. Digite a senha dele.",
       "unlock": "Desbloquear",
@@ -4737,6 +4750,105 @@
       "rollbackConfirmBody": "Isto substitui seus dados atuais pelo instantâneo e reinicia. Antes é feito um instantâneo dos dados substituídos."
     }
   },
+  "ConfigSyncSettings": {
+    "title": "Sincronização de configuração",
+    "scopeTitle": "O que é sincronizado",
+    "scopeIncludedTitle": "Incluído",
+    "scopeExcludedTitle": "Não incluído",
+    "scopeIncluded": {
+      "providers": "Provedores de modelos (com chaves de API)",
+      "agentSettings": "Configurações de agentes",
+      "customAgents": "Agentes personalizados",
+      "quickMessages": "Mensagens rápidas",
+      "taskTemplates": "Modelos de tarefa",
+      "preferences": "Preferências do app (idioma, aparência, opções)"
+    },
+    "scopeExcluded": {
+      "conversations": "Conversas e histórico",
+      "uploads": "Arquivos e imagens enviados",
+      "workspaces": "Projetos e caminhos do espaço de trabalho",
+      "mcp": "Servidores MCP (mantidos por cada CLI)",
+      "credentials": "Credenciais de login e tokens"
+    },
+    "fileTitle": "Arquivo de configuração",
+    "exportButton": "Exportar para arquivo",
+    "importButton": "Importar de arquivo",
+    "fileHint": "Grava um único arquivo JSON que você pode levar para outra máquina. A importação adiciona ou atualiza itens; os itens existentes que não estiverem no arquivo são mantidos.",
+    "webdavTitle": "Sincronização WebDAV",
+    "webdavHint": "Envia o instantâneo de configuração para o seu próprio servidor WebDAV.",
+    "presetLabel": "Servidor",
+    "preset": {
+      "jianguoyun": "Jianguoyun",
+      "nextcloud": "Nextcloud",
+      "synology": "NAS Synology",
+      "custom": "Personalizado"
+    },
+    "presetHint": {
+      "jianguoyun": "O Jianguoyun exige uma senha de aplicativo criada nas configurações de segurança, não a senha de login.",
+      "nextcloud": "Troque o domínio e o usuário e use uma senha de aplicativo em Configurações → Segurança.",
+      "synology": "Ative o WebDAV Server no Centro de Pacotes do DSM; as portas padrão são 5005 (HTTP) e 5006 (HTTPS)."
+    },
+    "serverUrl": "URL do servidor",
+    "username": "Usuário",
+    "password": "Senha",
+    "passwordKeep": "Deixe em branco para manter a senha salva",
+    "passwordPlaceholder": "Senha de aplicativo",
+    "remoteDir": "Pasta remota",
+    "profile": "Perfil",
+    "profileHint": "Máquinas com o mesmo perfil compartilham uma configuração. Use perfis diferentes para separar trabalho e uso pessoal.",
+    "autoSyncLabel": "Enviar automaticamente",
+    "autoSyncHint": "Verifica periodicamente e envia apenas quando a configuração muda.",
+    "intervalLabel": "Intervalo de verificação",
+    "intervalOption": "A cada {minutes} minutos",
+    "saveButton": "Salvar",
+    "testButton": "Testar conexão",
+    "uploadButton": "Sincronizar agora",
+    "restoreButton": "Restaurar do servidor",
+    "saved": "Ajustes de sincronização salvos",
+    "testSucceeded": "Conectado ao servidor WebDAV",
+    "uploaded": "Configuração enviada",
+    "exported": "Configuração exportada",
+    "restored": "{count, plural, one {# item aplicado} other {# itens aplicados}}",
+    "imported": "{count, plural, one {# item aplicado} other {# itens aplicados}}",
+    "noRemoteSnapshot": "Ainda não há instantâneo de configuração no servidor",
+    "lastSyncAt": "Última sincronização: {time}",
+    "neverSynced": "Ainda não sincronizado",
+    "lastError": "Último erro: {message}",
+    "working": "Processando…",
+    "plaintextWarning": "O instantâneo é enviado sem criptografia e contém chaves de API, então use um servidor WebDAV que só você acesse. As credenciais de sincronização nunca fazem parte do instantâneo.",
+    "importConfirmTitle": "Importar configuração?",
+    "importConfirmBody": "Os itens do arquivo serão adicionados ou atualizados nesta máquina. Os itens existentes que o arquivo não menciona são mantidos.",
+    "restartHint": "Algumas alterações (aparência, idioma e a lista de provedores) só têm efeito depois de reiniciar o codeg.",
+    "importConfirmAction": "Importar",
+    "restoreConfirmTitle": "Restaurar do servidor?",
+    "restoreConfirmBody": "O instantâneo de {device}, criado em {time}, será aplicado a esta máquina. Os itens existentes que o instantâneo não menciona são mantidos.",
+    "restoreConfirmAction": "Restaurar",
+    "cancel": "Cancelar",
+    "emptySnapshot": "Este instantâneo não contém itens de configuração.",
+    "domain": {
+      "modelProviders": "{count, plural, one {# provedor de modelos} other {# provedores de modelos}}",
+      "agentSettings": "{count, plural, one {# ajuste de agente} other {# ajustes de agentes}}",
+      "customAgents": "{count, plural, one {# agente personalizado} other {# agentes personalizados}}",
+      "quickMessages": "{count, plural, one {# mensagem rápida} other {# mensagens rápidas}}",
+      "taskTemplates": "{count, plural, one {# modelo de tarefa} other {# modelos de tarefa}}",
+      "preferences": "{count, plural, one {# preferência} other {# preferências}}"
+    },
+    "rollbackTitle": "Desfazer uma importação",
+    "rollbackHint": "Cada importação e cada restauração guardam antes o estado desta máquina. Os dez últimos são mantidos.",
+    "rollbackAction": "Desfazer",
+    "rollbackUnknownTime": "Hora desconhecida",
+    "rollbackConfirmTitle": "Voltar a esta configuração?",
+    "rollbackConfirmBody": "A configuração atual será substituída pela cópia guardada em {time}. A atual é guardada primeiro, por isso este passo também pode ser desfeito.",
+    "rollbackConfirmAction": "Desfazer",
+    "rolledBack": "{count, plural, one {# entrada restaurada} other {# entradas restauradas}}",
+    "encryptLabel": "Cifrar o snapshot",
+    "encryptHint": "Protege o ficheiro enviado com uma frase-passe. Todas as máquinas sincronizadas precisam da mesma.",
+    "encryptedNotice": "O snapshot é cifrado com a sua frase-passe antes do envio. Se a perder, a cópia no servidor não poderá ser recuperada.",
+    "passphrase": "Frase-passe",
+    "passphraseKeep": "Deixe vazio para manter a frase-passe guardada",
+    "passphrasePlaceholder": "Frase-passe de cifra",
+    "passphraseHint": "Fica no porta-chaves desta máquina e nunca é enviada. Introduza a mesma frase-passe nas suas outras máquinas."
+  },
   "backup": {
     "restore": {
       "error": {
@@ -4750,6 +4862,27 @@
     "error": {
       "diskSpace": "Espaço em disco insuficiente para concluir a operação.",
       "cancelled": "A operação foi cancelada."
+    }
+  },
+  "configSync": {
+    "error": {
+      "newerSchema": "Este instantâneo foi criado por uma versão mais nova do codeg (formato {snapshotVersion}); esta versão suporta até o formato {appVersion}.",
+      "checksum": "O instantâneo não confere com sua soma de verificação e pode estar incompleto.",
+      "invalidSnapshot": "Este arquivo não é um instantâneo de configuração válido do codeg.",
+      "noRemoteSnapshot": "Ainda não há instantâneo de configuração no servidor.",
+      "notConfigured": "Configure o servidor WebDAV antes de sincronizar.",
+      "unauthorized": "O servidor WebDAV recusou o usuário ou a senha.",
+      "forbidden": "O servidor WebDAV negou acesso a esta pasta.",
+      "remotePath": "A pasta remota ou o nome do perfil não é válido.",
+      "quota": "O servidor WebDAV não tem mais espaço.",
+      "network": "Não foi possível alcançar o servidor WebDAV.",
+      "server": "O servidor WebDAV retornou um erro ({status}).",
+      "passphraseRequired": "Este snapshot está cifrado. Defina a frase-passe antes de sincronizar.",
+      "badPassphrase": "Não foi possível decifrar o snapshot. Verifique a frase-passe — o ficheiro também pode estar danificado.",
+      "badDomain": "Não foi possível ler a secção {domain} deste snapshot.",
+      "noRollback": "Essa configuração guardada já não está nesta máquina.",
+      "credentialsUnreadable": "Não foi possível ler as credenciais salvas. Desbloqueie o chaveiro do sistema e tente novamente.",
+      "notEncrypted": "O instantâneo no servidor não está criptografado, mas a criptografia está ativada neste dispositivo. Envie a partir deste dispositivo para substituí-lo ou desative a criptografia para usá-lo."
     }
   },
   "WebConnection": {
@@ -5034,12 +5167,7 @@
     "cronApply": "Aplicar",
     "cronPreviewLabel": "Pré-visualização",
     "cronOpenBuilder": "Abrir o gerador de agendamento",
-    "branchDefault": "Branch padrão",
-    "branchUseCustom": "Usar \"{query}\"",
-    "branchLocal": "Local",
-    "branchRemote": "Remoto",
-    "branchSearchPlaceholder": "Pesquisar branches…",
-    "branchNone": "Sem branches"
+    "branchDefault": "Branch padrão"
   },
   "Tasks": {
     "title": "Tarefas a fazer",
@@ -5170,6 +5298,10 @@
     "promptLabel": "Descrição da tarefa",
     "promptPlaceholder": "Descreva a tarefa para o agente — @ para referenciar arquivos, / para comandos",
     "folderPlaceholder": "Selecione uma pasta",
+    "baseBranch": "Branch base",
+    "baseBranchPlaceholder": "Branch atual",
+    "baseBranchDefault": "Branch atual quando a tarefa iniciar",
+    "baseBranchHint": "A tarefa parte deste branch e o merge a devolve para ele.",
     "agentInheritedHint": "Herdado das configurações de tarefas; altere para personalizar esta tarefa",
     "agentOverrideReset": "Voltar a herdar",
     "sectionTarget": "Destino",

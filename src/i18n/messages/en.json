@@ -249,6 +249,8 @@
     "appLanguage": "App language",
     "languageSaveSuccess": "Language settings saved",
     "languageSaveFailed": "Failed to save language settings: {message}",
+    "dataTitle": "Data & sync",
+    "dataDescription": "Configuration sync carries your settings between machines; backup packs up all of this machine's codeg data.",
     "updateTitle": "App Update",
     "versionTitle": "Software Update",
     "updateDescription": "Check the configured release source for newer versions and install directly when available.",
@@ -3045,6 +3047,8 @@
         "tasks": {
           "connectingTitle": "Connecting to {agent}",
           "connectingDescription": "Establishing connection",
+          "preparingTitle": "Preparing {agent} session",
+          "preparingDescription": "Reading the conversation history",
           "loadingSelectorsTitle": "Loading {agent} selectors",
           "loadingSelectorsDescription": "Fetching mode and session config options",
           "initSessionTitle": "Initializing {agent} session",
@@ -3143,7 +3147,9 @@
         "saveEdit": "Save",
         "cancelEdit": "Cancel edit",
         "editItem": "Edit",
-        "deleteItem": "Remove"
+        "deleteItem": "Remove",
+        "steerItemNow": "Insert into current turn",
+        "steerItemAsNote": "Send as note for next check"
       },
       "welcomeInputPanel": {
         "agentsSettingsPath": "Settings > Agents",
@@ -4058,6 +4064,13 @@
     "errorLoadingDir": "Failed to load directory",
     "selectedCount": "{count} selected"
   },
+  "BranchPicker": {
+    "searchPlaceholder": "Search branches…",
+    "none": "No branches",
+    "local": "Local",
+    "remote": "Remote",
+    "useCustom": "Use \"{query}\""
+  },
   "ChatChannelSettings": {
     "loading": "Loading...",
     "sectionTitle": "Chat Channels",
@@ -4646,13 +4659,12 @@
     "connectionExpired": "Remote connection \"{name}\" is expired. Update its token and reload this window."
   },
   "BackupSettings": {
-    "title": "Backup & Restore",
-    "description": "Export a portable backup of your codeg data, or restore from one.",
     "tabs": {
       "backup": "Backup",
       "restore": "Restore"
     },
     "export": {
+      "description": "Packs this machine's codeg data — the database and uploaded files — into one archive.",
       "includeExternal": "Include conversation content",
       "includeExternalHint": "Also archive agent CLI transcripts (Claude, Codex, Gemini, …). Increases size.",
       "passphrase": "Passphrase (optional)",
@@ -4675,6 +4687,7 @@
       }
     },
     "restore": {
+      "description": "Replaces this machine's codeg data with the contents of a backup archive.",
       "selectFile": "Select backup file",
       "passphrasePrompt": "This backup is encrypted. Enter its passphrase.",
       "unlock": "Unlock",
@@ -4742,6 +4755,105 @@
       "rollbackConfirmBody": "This replaces your current data with the snapshot, then restarts. The data being replaced is snapshotted first."
     }
   },
+  "ConfigSyncSettings": {
+    "title": "Configuration sync",
+    "scopeTitle": "What gets synced",
+    "scopeIncludedTitle": "Included",
+    "scopeExcludedTitle": "Not included",
+    "scopeIncluded": {
+      "providers": "Model providers (with API keys)",
+      "agentSettings": "Agent settings",
+      "customAgents": "Custom agents",
+      "quickMessages": "Quick messages",
+      "taskTemplates": "Task templates",
+      "preferences": "App preferences (language, appearance, toggles)"
+    },
+    "scopeExcluded": {
+      "conversations": "Conversations and history",
+      "uploads": "Uploaded files and images",
+      "workspaces": "Workspace projects and paths",
+      "mcp": "MCP servers (owned by each CLI)",
+      "credentials": "Login credentials and tokens"
+    },
+    "fileTitle": "Configuration file",
+    "exportButton": "Export to file",
+    "importButton": "Import from file",
+    "fileHint": "Writes one JSON file you can carry to another machine. Importing adds or updates entries; existing ones that are missing from the file are kept.",
+    "webdavTitle": "WebDAV sync",
+    "webdavHint": "Upload the configuration snapshot to your own WebDAV server.",
+    "presetLabel": "Server",
+    "preset": {
+      "jianguoyun": "Jianguoyun",
+      "nextcloud": "Nextcloud",
+      "synology": "Synology NAS",
+      "custom": "Custom"
+    },
+    "presetHint": {
+      "jianguoyun": "Jianguoyun needs an app password created in Security settings, not your login password.",
+      "nextcloud": "Replace the domain and username, then use an app password from Settings → Security.",
+      "synology": "Enable WebDAV Server in DSM Package Center; default ports are 5005 (HTTP) and 5006 (HTTPS)."
+    },
+    "serverUrl": "Server URL",
+    "username": "Username",
+    "password": "Password",
+    "passwordKeep": "Leave empty to keep the saved password",
+    "passwordPlaceholder": "App password",
+    "remoteDir": "Remote folder",
+    "profile": "Profile",
+    "profileHint": "Machines that share a profile share one configuration. Use separate profiles to keep work and personal setups apart.",
+    "autoSyncLabel": "Upload automatically",
+    "autoSyncHint": "Checks periodically and uploads only when the configuration changed.",
+    "intervalLabel": "Check interval",
+    "intervalOption": "Every {minutes} minutes",
+    "saveButton": "Save",
+    "testButton": "Test connection",
+    "uploadButton": "Sync now",
+    "restoreButton": "Restore from remote",
+    "saved": "Sync settings saved",
+    "testSucceeded": "Connected to the WebDAV server",
+    "uploaded": "Configuration uploaded",
+    "exported": "Configuration exported",
+    "restored": "{count, plural, one {# entry applied} other {# entries applied}}",
+    "imported": "{count, plural, one {# entry applied} other {# entries applied}}",
+    "noRemoteSnapshot": "There is no configuration snapshot on the server yet",
+    "lastSyncAt": "Last synced {time}",
+    "neverSynced": "Not synced yet",
+    "lastError": "Last error: {message}",
+    "working": "Working…",
+    "plaintextWarning": "The snapshot is uploaded unencrypted and includes API keys, so use a WebDAV server only you can reach. The sync credentials themselves are never part of the snapshot.",
+    "importConfirmTitle": "Import configuration?",
+    "importConfirmBody": "Entries from this file will be added or updated on this machine. Existing entries that the file does not mention are kept.",
+    "restartHint": "Some changes — appearance, language, and the provider list — take effect after restarting codeg.",
+    "importConfirmAction": "Import",
+    "restoreConfirmTitle": "Restore from remote?",
+    "restoreConfirmBody": "The snapshot from {device}, taken {time}, will be applied to this machine. Existing entries that the snapshot does not mention are kept.",
+    "restoreConfirmAction": "Restore",
+    "cancel": "Cancel",
+    "emptySnapshot": "This snapshot contains no configuration entries.",
+    "domain": {
+      "modelProviders": "{count, plural, one {# model provider} other {# model providers}}",
+      "agentSettings": "{count, plural, one {# agent setting} other {# agent settings}}",
+      "customAgents": "{count, plural, one {# custom agent} other {# custom agents}}",
+      "quickMessages": "{count, plural, one {# quick message} other {# quick messages}}",
+      "taskTemplates": "{count, plural, one {# task template} other {# task templates}}",
+      "preferences": "{count, plural, one {# preference} other {# preferences}}"
+    },
+    "rollbackTitle": "Undo an import",
+    "rollbackHint": "Every import and every restore saves what this machine looked like beforehand. The last ten are kept.",
+    "rollbackAction": "Undo",
+    "rollbackUnknownTime": "Unknown time",
+    "rollbackConfirmTitle": "Go back to this configuration?",
+    "rollbackConfirmBody": "This replaces the current configuration with the copy saved on {time}. The current one is saved first, so this is itself undoable.",
+    "rollbackConfirmAction": "Undo",
+    "rolledBack": "{count, plural, one {# entry restored} other {# entries restored}}",
+    "encryptLabel": "Encrypt the snapshot",
+    "encryptHint": "Protect the uploaded file with a passphrase. Every machine you sync needs the same one.",
+    "encryptedNotice": "The snapshot is encrypted with your passphrase before it is uploaded. If you lose the passphrase, the copy on the server cannot be recovered.",
+    "passphrase": "Passphrase",
+    "passphraseKeep": "Leave empty to keep the saved passphrase",
+    "passphrasePlaceholder": "Encryption passphrase",
+    "passphraseHint": "Kept in this machine's keychain and never uploaded. Enter the same passphrase on your other machines."
+  },
   "backup": {
     "restore": {
       "error": {
@@ -4755,6 +4867,27 @@
     "error": {
       "diskSpace": "Not enough disk space to complete the operation.",
       "cancelled": "The operation was cancelled."
+    }
+  },
+  "configSync": {
+    "error": {
+      "newerSchema": "This snapshot was created by a newer version of codeg (format {snapshotVersion}); this version understands up to format {appVersion}.",
+      "checksum": "The snapshot does not match its checksum and may be incomplete.",
+      "invalidSnapshot": "This file is not a valid codeg configuration snapshot.",
+      "noRemoteSnapshot": "There is no configuration snapshot on the server yet.",
+      "notConfigured": "Set up the WebDAV server before syncing.",
+      "unauthorized": "The WebDAV server rejected the username or password.",
+      "forbidden": "The WebDAV server denied access to this folder.",
+      "remotePath": "The remote folder or profile name is not valid.",
+      "quota": "The WebDAV server has no space left.",
+      "network": "Could not reach the WebDAV server.",
+      "server": "The WebDAV server returned an error ({status}).",
+      "passphraseRequired": "This snapshot is encrypted. Set the encryption passphrase before syncing.",
+      "badPassphrase": "The snapshot could not be decrypted. Check the passphrase — or the file may be damaged.",
+      "badDomain": "The {domain} section of this snapshot could not be read.",
+      "noRollback": "That saved configuration is no longer on this machine.",
+      "credentialsUnreadable": "Could not read the saved credentials. Unlock the system keychain, then try again.",
+      "notEncrypted": "The snapshot on the server is not encrypted, but encryption is turned on here. Upload from this device to replace it, or turn encryption off to use it."
     }
   },
   "WebConnection": {
@@ -5039,12 +5172,7 @@
     "cronApply": "Apply",
     "cronPreviewLabel": "Preview",
     "cronOpenBuilder": "Open schedule builder",
-    "branchDefault": "Default branch",
-    "branchUseCustom": "Use \"{query}\"",
-    "branchLocal": "Local",
-    "branchRemote": "Remote",
-    "branchSearchPlaceholder": "Search branches…",
-    "branchNone": "No branches"
+    "branchDefault": "Default branch"
   },
   "Tasks": {
     "title": "To-dos",
@@ -5175,6 +5303,10 @@
     "promptLabel": "Task description",
     "promptPlaceholder": "Describe the task for the agent — @ to reference files, / for commands",
     "folderPlaceholder": "Select a folder",
+    "baseBranch": "Base branch",
+    "baseBranchPlaceholder": "Current branch",
+    "baseBranchDefault": "Current branch when the task starts",
+    "baseBranchHint": "The task branches from here, and merging lands it back on this branch.",
     "agentInheritedHint": "Inherited from task settings — change it to override for this task",
     "agentOverrideReset": "Reset to inherited",
     "sectionTarget": "Target",

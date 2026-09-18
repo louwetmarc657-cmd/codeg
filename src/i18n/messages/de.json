@@ -249,6 +249,8 @@
     "appLanguage": "App-Sprache",
     "languageSaveSuccess": "Spracheinstellungen wurden gespeichert",
     "languageSaveFailed": "Spracheinstellungen konnten nicht gespeichert werden: {message}",
+    "dataTitle": "Daten & Synchronisierung",
+    "dataDescription": "Die Konfigurationssynchronisierung überträgt deine Einstellungen zwischen Geräten; die Sicherung packt alle codeg-Daten dieses Geräts zusammen.",
     "updateTitle": "App-Update",
     "versionTitle": "Softwareupdate",
     "updateDescription": "Prüft die konfigurierte Release-Quelle auf neue Versionen und installiert sie bei Verfügbarkeit direkt.",
@@ -3045,6 +3047,8 @@
         "tasks": {
           "connectingTitle": "Verbinde mit {agent}",
           "connectingDescription": "Verbindung wird hergestellt",
+          "preparingTitle": "{agent}-Sitzung wird vorbereitet",
+          "preparingDescription": "Gesprächsverlauf wird gelesen",
           "loadingSelectorsTitle": "{agent}-Selektoren werden geladen",
           "loadingSelectorsDescription": "Modus- und Sitzungsoptionen werden abgerufen",
           "initSessionTitle": "Initializing {agent} session",
@@ -3138,7 +3142,9 @@
         "saveEdit": "Speichern",
         "cancelEdit": "Bearbeitung abbrechen",
         "editItem": "Bearbeiten",
-        "deleteItem": "Entfernen"
+        "deleteItem": "Entfernen",
+        "steerItemNow": "In aktuellen Turn einfügen",
+        "steerItemAsNote": "Als Notiz für die nächste Abfrage senden"
       },
       "welcomeInputPanel": {
         "agentsSettingsPath": "Einstellungen > Agenten",
@@ -4640,14 +4646,20 @@
     "errorLoadingDir": "Verzeichnis konnte nicht geladen werden",
     "selectedCount": "{count} ausgewählt"
   },
+  "BranchPicker": {
+    "searchPlaceholder": "Branches suchen…",
+    "none": "Keine Branches",
+    "local": "Lokal",
+    "remote": "Remote",
+    "useCustom": "„{query}“ verwenden"
+  },
   "BackupSettings": {
-    "title": "Sicherung & Wiederherstellung",
-    "description": "Exportiere eine portable Sicherung deiner codeg-Daten oder stelle aus einer Sicherung wieder her.",
     "tabs": {
       "backup": "Sicherung",
       "restore": "Wiederherstellung"
     },
     "export": {
+      "description": "Packt die codeg-Daten dieses Geräts – Datenbank und hochgeladene Dateien – in ein Archiv.",
       "includeExternal": "Gesprächsinhalte einschließen",
       "includeExternalHint": "Archiviert auch die CLI-Transkripte (Claude, Codex, Gemini, …). Erhöht die Größe.",
       "passphrase": "Passphrase (optional)",
@@ -4670,6 +4682,7 @@
       }
     },
     "restore": {
+      "description": "Ersetzt die codeg-Daten dieses Geräts durch den Inhalt einer Sicherung.",
       "selectFile": "Sicherungsdatei auswählen",
       "passphrasePrompt": "Diese Sicherung ist verschlüsselt. Gib ihre Passphrase ein.",
       "unlock": "Entsperren",
@@ -4737,6 +4750,105 @@
       "rollbackConfirmBody": "Damit werden deine aktuellen Daten durch die Momentaufnahme ersetzt und die App startet neu. Von den ersetzten Daten wird vorher eine Momentaufnahme angelegt."
     }
   },
+  "ConfigSyncSettings": {
+    "title": "Konfigurationssynchronisierung",
+    "scopeTitle": "Was synchronisiert wird",
+    "scopeIncludedTitle": "Enthalten",
+    "scopeExcludedTitle": "Nicht enthalten",
+    "scopeIncluded": {
+      "providers": "Modellanbieter (inkl. API-Schlüssel)",
+      "agentSettings": "Agent-Einstellungen",
+      "customAgents": "Eigene Agenten",
+      "quickMessages": "Schnellnachrichten",
+      "taskTemplates": "Aufgabenvorlagen",
+      "preferences": "App-Einstellungen (Sprache, Aussehen, Schalter)"
+    },
+    "scopeExcluded": {
+      "conversations": "Unterhaltungen und Verlauf",
+      "uploads": "Hochgeladene Dateien und Bilder",
+      "workspaces": "Arbeitsbereich-Projekte und Pfade",
+      "mcp": "MCP-Server (gehören zur jeweiligen CLI)",
+      "credentials": "Anmeldedaten und Tokens"
+    },
+    "fileTitle": "Konfigurationsdatei",
+    "exportButton": "In Datei exportieren",
+    "importButton": "Aus Datei importieren",
+    "fileHint": "Schreibt eine einzelne JSON-Datei, die du auf ein anderes Gerät mitnehmen kannst. Beim Import werden Einträge ergänzt oder aktualisiert; vorhandene Einträge, die in der Datei fehlen, bleiben erhalten.",
+    "webdavTitle": "WebDAV-Synchronisierung",
+    "webdavHint": "Lädt den Konfigurations-Snapshot auf deinen eigenen WebDAV-Server.",
+    "presetLabel": "Server",
+    "preset": {
+      "jianguoyun": "Jianguoyun",
+      "nextcloud": "Nextcloud",
+      "synology": "Synology NAS",
+      "custom": "Benutzerdefiniert"
+    },
+    "presetHint": {
+      "jianguoyun": "Jianguoyun benötigt ein in den Sicherheitseinstellungen erstelltes App-Passwort, nicht das Login-Passwort.",
+      "nextcloud": "Ersetze Domain und Benutzernamen und verwende ein App-Passwort aus Einstellungen → Sicherheit.",
+      "synology": "Aktiviere WebDAV Server im DSM-Paketzentrum; Standardports sind 5005 (HTTP) und 5006 (HTTPS)."
+    },
+    "serverUrl": "Server-URL",
+    "username": "Benutzername",
+    "password": "Passwort",
+    "passwordKeep": "Leer lassen, um das gespeicherte Passwort zu behalten",
+    "passwordPlaceholder": "App-Passwort",
+    "remoteDir": "Entfernter Ordner",
+    "profile": "Profil",
+    "profileHint": "Geräte mit demselben Profil teilen sich eine Konfiguration. Verwende getrennte Profile, um Arbeit und Privates zu trennen.",
+    "autoSyncLabel": "Automatisch hochladen",
+    "autoSyncHint": "Prüft regelmäßig und lädt nur hoch, wenn sich die Konfiguration geändert hat.",
+    "intervalLabel": "Prüfintervall",
+    "intervalOption": "Alle {minutes} Minuten",
+    "saveButton": "Speichern",
+    "testButton": "Verbindung testen",
+    "uploadButton": "Jetzt synchronisieren",
+    "restoreButton": "Vom Server wiederherstellen",
+    "saved": "Synchronisierungseinstellungen gespeichert",
+    "testSucceeded": "Verbindung zum WebDAV-Server hergestellt",
+    "uploaded": "Konfiguration hochgeladen",
+    "exported": "Konfiguration exportiert",
+    "restored": "{count, plural, one {# Eintrag übernommen} other {# Einträge übernommen}}",
+    "imported": "{count, plural, one {# Eintrag übernommen} other {# Einträge übernommen}}",
+    "noRemoteSnapshot": "Auf dem Server liegt noch kein Konfigurations-Snapshot",
+    "lastSyncAt": "Zuletzt synchronisiert: {time}",
+    "neverSynced": "Noch nicht synchronisiert",
+    "lastError": "Letzter Fehler: {message}",
+    "working": "Wird ausgeführt…",
+    "plaintextWarning": "Der Snapshot wird unverschlüsselt hochgeladen und enthält API-Schlüssel. Nutze daher einen WebDAV-Server, auf den nur du zugreifen kannst. Die Zugangsdaten der Synchronisierung selbst sind nie Teil des Snapshots.",
+    "importConfirmTitle": "Konfiguration importieren?",
+    "importConfirmBody": "Einträge aus der Datei werden auf diesem Gerät hinzugefügt oder aktualisiert. Vorhandene Einträge, die in der Datei nicht vorkommen, bleiben erhalten.",
+    "restartHint": "Einige Änderungen – Darstellung, Sprache und die Anbieterliste – werden erst nach einem Neustart von codeg wirksam.",
+    "importConfirmAction": "Importieren",
+    "restoreConfirmTitle": "Vom Server wiederherstellen?",
+    "restoreConfirmBody": "Der Snapshot von {device} vom {time} wird auf dieses Gerät angewendet. Vorhandene Einträge, die im Snapshot fehlen, bleiben erhalten.",
+    "restoreConfirmAction": "Wiederherstellen",
+    "cancel": "Abbrechen",
+    "emptySnapshot": "Dieser Snapshot enthält keine Konfigurationseinträge.",
+    "domain": {
+      "modelProviders": "{count, plural, one {# Modellanbieter} other {# Modellanbieter}}",
+      "agentSettings": "{count, plural, one {# Agenteneinstellung} other {# Agenteneinstellungen}}",
+      "customAgents": "{count, plural, one {# eigener Agent} other {# eigene Agenten}}",
+      "quickMessages": "{count, plural, one {# Schnellnachricht} other {# Schnellnachrichten}}",
+      "taskTemplates": "{count, plural, one {# Aufgabenvorlage} other {# Aufgabenvorlagen}}",
+      "preferences": "{count, plural, one {# Einstellung} other {# Einstellungen}}"
+    },
+    "rollbackTitle": "Import rückgängig machen",
+    "rollbackHint": "Jeder Import und jede Wiederherstellung sichern vorher den Stand dieses Geräts. Die letzten zehn bleiben erhalten.",
+    "rollbackAction": "Rückgängig",
+    "rollbackUnknownTime": "Zeit unbekannt",
+    "rollbackConfirmTitle": "Zu dieser Konfiguration zurückkehren?",
+    "rollbackConfirmBody": "Die aktuelle Konfiguration wird durch die Kopie vom {time} ersetzt. Die aktuelle wird vorher gesichert, dieser Schritt lässt sich also ebenfalls rückgängig machen.",
+    "rollbackConfirmAction": "Rückgängig",
+    "rolledBack": "{count, plural, one {# Eintrag wiederhergestellt} other {# Einträge wiederhergestellt}}",
+    "encryptLabel": "Snapshot verschlüsseln",
+    "encryptHint": "Schützt die hochgeladene Datei mit einer Passphrase. Jedes synchronisierte Gerät braucht dieselbe.",
+    "encryptedNotice": "Der Snapshot wird vor dem Hochladen mit deiner Passphrase verschlüsselt. Geht sie verloren, lässt sich die Kopie auf dem Server nicht wiederherstellen.",
+    "passphrase": "Passphrase",
+    "passphraseKeep": "Leer lassen, um die gespeicherte Passphrase zu behalten",
+    "passphrasePlaceholder": "Passphrase zur Verschlüsselung",
+    "passphraseHint": "Bleibt im Schlüsselbund dieses Geräts und wird nie hochgeladen. Gib auf deinen anderen Geräten dieselbe Passphrase ein."
+  },
   "backup": {
     "restore": {
       "error": {
@@ -4750,6 +4862,27 @@
     "error": {
       "diskSpace": "Nicht genügend Speicherplatz, um den Vorgang abzuschließen.",
       "cancelled": "Der Vorgang wurde abgebrochen."
+    }
+  },
+  "configSync": {
+    "error": {
+      "newerSchema": "Dieser Snapshot stammt aus einer neueren codeg-Version (Format {snapshotVersion}); diese Version unterstützt höchstens Format {appVersion}.",
+      "checksum": "Der Snapshot passt nicht zu seiner Prüfsumme und ist möglicherweise unvollständig.",
+      "invalidSnapshot": "Diese Datei ist kein gültiger codeg-Konfigurations-Snapshot.",
+      "noRemoteSnapshot": "Auf dem Server liegt noch kein Konfigurations-Snapshot.",
+      "notConfigured": "Richte den WebDAV-Server ein, bevor du synchronisierst.",
+      "unauthorized": "Der WebDAV-Server hat Benutzername oder Passwort abgelehnt.",
+      "forbidden": "Der WebDAV-Server hat den Zugriff auf diesen Ordner verweigert.",
+      "remotePath": "Der entfernte Ordner oder der Profilname ist ungültig.",
+      "quota": "Auf dem WebDAV-Server ist kein Speicherplatz mehr frei.",
+      "network": "Der WebDAV-Server war nicht erreichbar.",
+      "server": "Der WebDAV-Server hat einen Fehler zurückgegeben ({status}).",
+      "passphraseRequired": "Dieser Snapshot ist verschlüsselt. Lege vor dem Synchronisieren die Passphrase fest.",
+      "badPassphrase": "Der Snapshot konnte nicht entschlüsselt werden. Prüfe die Passphrase – die Datei kann auch beschädigt sein.",
+      "badDomain": "Der Abschnitt {domain} dieses Snapshots konnte nicht gelesen werden.",
+      "noRollback": "Diese gespeicherte Konfiguration ist auf diesem Gerät nicht mehr vorhanden.",
+      "credentialsUnreadable": "Die gespeicherten Zugangsdaten konnten nicht gelesen werden. Entsperre den Systemschlüsselbund und versuche es erneut.",
+      "notEncrypted": "Der Snapshot auf dem Server ist nicht verschlüsselt, auf diesem Gerät ist die Verschlüsselung aber aktiviert. Lade von diesem Gerät hoch, um ihn zu ersetzen, oder deaktiviere die Verschlüsselung, um ihn zu verwenden."
     }
   },
   "WebConnection": {
@@ -5034,12 +5167,7 @@
     "cronApply": "Anwenden",
     "cronPreviewLabel": "Vorschau",
     "cronOpenBuilder": "Zeitplan-Generator öffnen",
-    "branchDefault": "Standard-Branch",
-    "branchUseCustom": "„{query}“ verwenden",
-    "branchLocal": "Lokal",
-    "branchRemote": "Remote",
-    "branchSearchPlaceholder": "Branches suchen…",
-    "branchNone": "Keine Branches"
+    "branchDefault": "Standard-Branch"
   },
   "Tasks": {
     "title": "To-dos",
@@ -5170,6 +5298,10 @@
     "promptLabel": "Aufgabenbeschreibung",
     "promptPlaceholder": "Beschreibe die Aufgabe für den Agenten — @ für Dateiverweise, / für Befehle",
     "folderPlaceholder": "Ordner wählen",
+    "baseBranch": "Basis-Branch",
+    "baseBranchPlaceholder": "Aktueller Branch",
+    "baseBranchDefault": "Aktueller Branch beim Start der Aufgabe",
+    "baseBranchHint": "Die Aufgabe zweigt von diesem Branch ab und wird beim Mergen wieder dorthin übernommen.",
     "agentInheritedHint": "Aus den Aufgaben-Einstellungen geerbt — Änderungen gelten nur für diese Aufgabe",
     "agentOverrideReset": "Wieder erben",
     "sectionTarget": "Ziel",

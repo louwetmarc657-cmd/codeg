@@ -82,6 +82,7 @@ mod tauri_app {
         automation as automation_commands, background as background_commands, backup,
         canvas as canvas_commands,
         chat_authoring as chat_authoring_commands, chat_channel as chat_channel_commands,
+        config_sync,
         conversations,
         custom_skills as custom_skills_commands,
         deepseek_settings as deepseek_settings_commands, delegation as delegation_commands,
@@ -776,6 +777,26 @@ mod tauri_app {
                     tauri::async_runtime::block_on(async move {
                         crate::commands::system_settings::apply_persisted_close_behavior(
                             &db_for_close,
+                        )
+                        .await;
+                    });
+                }
+
+                // Start the config-sync uploader. Background and detached:
+                // it sleeps a minute before its first hash compare, reads its
+                // settings every tick (so toggling sync in the UI takes effect
+                // without a restart), and does nothing at all until the user
+                // configures a WebDAV endpoint.
+                {
+                    let db_for_sync = app.state::<db::AppDatabase>().conn.clone();
+                    let emitter = std::sync::Arc::new(web::event_bridge::EventEmitter::Tauri(
+                        app.handle().clone(),
+                    ));
+                    tauri::async_runtime::spawn(async move {
+                        crate::commands::config_sync::auto_sync::run_auto_sync_loop(
+                            db_for_sync,
+                            emitter,
+                            env!("CARGO_PKG_VERSION").to_string(),
                         )
                         .await;
                     });
@@ -1842,6 +1863,21 @@ mod tauri_app {
                 notification::open_system_notification_settings,
                 file_io::save_binary_file,
                 file_io::save_text_file,
+                config_sync::config_sync_export_file,
+                config_sync::config_sync_peek_file,
+                config_sync::config_sync_import_file,
+                config_sync::config_sync_get_settings,
+                config_sync::config_sync_update_settings,
+                config_sync::config_sync_get_state,
+                config_sync::config_sync_test_connection,
+                config_sync::config_sync_upload_now,
+                config_sync::config_sync_peek_remote,
+                config_sync::config_sync_download_apply,
+                config_sync::config_sync_export_content,
+                config_sync::config_sync_peek_content,
+                config_sync::config_sync_import_content,
+                config_sync::config_sync_list_rollbacks,
+                config_sync::config_sync_apply_rollback,
                 backup::backup_create,
                 backup::backup_prepare_source,
                 backup::backup_release_source,

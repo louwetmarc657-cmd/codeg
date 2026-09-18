@@ -1563,20 +1563,45 @@ impl TaskEngine {
 
         // Where the task's branch starts, and what its diff is measured
         // against. Normally both are the project folder's current HEAD; a task
-        // that IS a pull request starts at that pull request's head instead,
+        // created FOR a particular branch starts at that branch's tip instead,
+        // and a task that IS a pull request starts at that pull request's head
         // and measures against the merge base (see `pr_checkout_point`).
         let (base_branch, base_sha, start_at) = match self.pr_checkout_point(task, root).await? {
             Some(point) => point,
-            None => {
-                let head = resolve_git_head(&root.path).await.map_err(|e| e.to_string())?;
-                let base_branch = head.branch.ok_or_else(|| {
-                    "project folder is not on a branch (detached HEAD?)".to_string()
-                })?;
-                let base_sha = task_git::rev_parse(&root.path, "HEAD")
-                    .await
-                    .map_err(|e| e.to_string())?;
-                (base_branch, base_sha.clone(), base_sha)
-            }
+            None => match chosen_base_branch(task) {
+                Some(branch) => {
+                    // A branch that is gone by the time the task is claimed
+                    // FAILS the setup: the choice exists so the work lands
+                    // somewhere specific, and quietly branching from the
+                    // checkout instead would be the wrong answer delivered
+                    // without a word. The LOCAL branch specifically — the
+                    // merge lands into the project checkout, which can only be
+                    // on a local branch — and looking it up this way is also
+                    // what keeps an arbitrary string out of the git commands
+                    // (and out of the merge prompt) downstream: only a name
+                    // git itself resolved under `refs/heads/` gets through.
+                    let tip = task_git::local_branch_tip(&root.path, &branch)
+                        .await
+                        .map_err(|e| e.to_string())?
+                        .ok_or_else(|| {
+                            format!(
+                                "the task's base branch '{branch}' does not exist in the \
+                                 project folder"
+                            )
+                        })?;
+                    (branch, tip.clone(), tip)
+                }
+                None => {
+                    let head = resolve_git_head(&root.path).await.map_err(|e| e.to_string())?;
+                    let base_branch = head.branch.ok_or_else(|| {
+                        "project folder is not on a branch (detached HEAD?)".to_string()
+                    })?;
+                    let base_sha = task_git::rev_parse(&root.path, "HEAD")
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    (base_branch, base_sha.clone(), base_sha)
+                }
+            },
         };
 
         let branch = format!("task/{}", task.id);
@@ -3602,8 +3627,12 @@ impl TaskEngine {
         }
         let head = resolve_git_head(&root.path).await.map_err(|e| e.to_string())?;
         if head.branch.as_deref() != Some(base_branch.as_str()) {
+            // Not necessarily a branch the user wandered off: a task created
+            // FOR another branch has a base the project folder may never have
+            // been on. So the ask is "put it there", not "put it back".
             return Err(format!(
-                "project folder is on '{}', expected '{base_branch}' — switch back to merge",
+                "project folder is on '{}', expected '{base_branch}' — switch it to \
+                 '{base_branch}' to merge",
                 head.branch.as_deref().unwrap_or("detached HEAD")
             ));
         }
@@ -6176,6 +6205,18 @@ fn launch_mode_for(task: &crate::db::entities::work_task::Model) -> LaunchMode {
     }
 }
 
+/// The branch the task was created FOR, if its config names one. A blank
+/// choice is no choice: the editor writes the empty string for "the project
+/// folder's current branch", which is also what every task predating the
+/// field carries.
+fn chosen_base_branch(task: &crate::db::entities::work_task::Model) -> Option<String> {
+    serde_json::from_str::<WorkTaskConfig>(&task.config)
+        .ok()?
+        .base_branch
+        .map(|b| b.trim().to_string())
+        .filter(|b| !b.is_empty())
+}
+
 /// Layered agent config: task override wins wholesale; else the folder's task
 /// settings; else the folder's default agent with no extra options.
 fn effective_agent_config(
@@ -7517,7 +7558,7 @@ mod tests {
             "another task of this project is already merging — wait for it"
         ));
         assert!(!is_benign_merge_race(
-            "project folder is on 'feature', expected 'main' — switch back to merge"
+            "project folder is on 'feature', expected 'main' — switch it to 'main' to merge"
         ));
         assert!(!is_benign_merge_race(
             "the task worktree no longer exists on disk"
@@ -11132,6 +11173,131 @@ mod tests {
             head_repo: head_repo.into(),
             base_ref: "main".into(),
         }
+    }
+
+    /// A repository on `main` that also carries a `feature` branch the project
+    /// checkout is NOT on. Returns `(engine, task id, home, feature tip, main
+    /// tip)`; the task's config is whatever the caller passes.
+    async fn branch_choice_fixture(
+        config: serde_json::Value,
+    ) -> (Arc<TaskEngine>, i32, tempfile::TempDir, String, String) {
+        use sea_orm::{ActiveModelTrait, Set};
+
+        let home = tempfile::tempdir().expect("tempdir");
+        let root = home.path().join("repo");
+        std::fs::create_dir_all(&root).expect("mkdir");
+        git_run(&root, &["init", "-q", "-b", "main"]);
+        std::fs::write(root.join("a.txt"), "one\n").expect("write");
+        git_run(&root, &["add", "-A"]);
+        git_run(&root, &["commit", "-q", "-m", "base"]);
+        // The branch the user wants this task to work on…
+        git_run(&root, &["checkout", "-q", "-b", "feature"]);
+        std::fs::write(root.join("feature.txt"), "the feature\n").expect("write");
+        git_run(&root, &["add", "-A"]);
+        git_run(&root, &["commit", "-q", "-m", "the feature so far"]);
+        let feature_tip = task_git::rev_parse(root.to_str().unwrap(), "HEAD")
+            .await
+            .expect("feature tip");
+        // …and the branch the project folder happens to be sitting on.
+        git_run(&root, &["checkout", "-q", "main"]);
+        std::fs::write(root.join("b.txt"), "meanwhile\n").expect("write");
+        git_run(&root, &["add", "-A"]);
+        git_run(&root, &["commit", "-q", "-m", "main moves on"]);
+        let main_tip = task_git::rev_parse(root.to_str().unwrap(), "HEAD")
+            .await
+            .expect("main tip");
+
+        let db = crate::db::test_helpers::fresh_in_memory_db().await;
+        let folder_id = crate::db::test_helpers::seed_folder(&db, root.to_str().unwrap()).await;
+        let now = chrono::Utc::now();
+        let task = crate::db::entities::work_task::ActiveModel {
+            folder_id: Set(folder_id),
+            title: Set("Polish the feature".to_string()),
+            config: Set(config.to_string()),
+            status: Set(WorkTaskStatus::Todo),
+            run_seq: Set(1),
+            sort_order: Set(0),
+            created_at: Set(now),
+            updated_at: Set(now),
+            ..Default::default()
+        }
+        .insert(&db.conn)
+        .await
+        .expect("insert task");
+
+        (test_engine(db), task.id, home, feature_tip, main_tip)
+    }
+
+    /// The task says which branch it is for, and that is where it starts and
+    /// what it lands back onto — whatever the project folder happens to be
+    /// checked out on when the task is claimed.
+    #[tokio::test]
+    async fn a_task_starts_on_the_base_branch_it_was_created_for() {
+        let (engine, task_id, home, feature_tip, _main_tip) =
+            branch_choice_fixture(serde_json::json!({ "base_branch": "feature" })).await;
+        let task = row(&engine, task_id).await;
+        let root = get_folder_core(&engine.db, task.folder_id).await.expect("root");
+
+        let wt = engine
+            .ensure_worktree(&task, &root, &WorkTaskFolderSettings::default())
+            .await
+            .expect("worktree");
+
+        assert_eq!(
+            task_git::rev_parse(&wt.path, "HEAD").await.expect("head"),
+            feature_tip,
+            "the worktree starts at the chosen branch's tip"
+        );
+        let after = row(&engine, task_id).await;
+        assert_eq!(
+            after.base_branch.as_deref(),
+            Some("feature"),
+            "the merge lands back onto the branch the task was created for"
+        );
+        assert_eq!(after.base_sha.as_deref(), Some(feature_tip.as_str()));
+        drop(home);
+    }
+
+    /// No choice recorded — every task created before this existed, and every
+    /// task of a user who does not care — keeps branching from the project
+    /// folder's current checkout.
+    #[tokio::test]
+    async fn a_task_without_a_chosen_branch_still_follows_the_checkout() {
+        let (engine, task_id, home, _feature_tip, main_tip) =
+            branch_choice_fixture(serde_json::json!({})).await;
+        let task = row(&engine, task_id).await;
+        let root = get_folder_core(&engine.db, task.folder_id).await.expect("root");
+
+        engine
+            .ensure_worktree(&task, &root, &WorkTaskFolderSettings::default())
+            .await
+            .expect("worktree");
+
+        let after = row(&engine, task_id).await;
+        assert_eq!(after.base_branch.as_deref(), Some("main"));
+        assert_eq!(after.base_sha.as_deref(), Some(main_tip.as_str()));
+        drop(home);
+    }
+
+    /// A branch that is gone by the time the task is claimed must not quietly
+    /// fall back to the checkout: the whole point of the choice is that the
+    /// work lands somewhere specific, and starting from `main` instead would
+    /// be a wrong answer delivered silently.
+    #[tokio::test]
+    async fn a_chosen_branch_that_disappeared_refuses_instead_of_falling_back() {
+        let (engine, task_id, home, _feature_tip, _main_tip) =
+            branch_choice_fixture(serde_json::json!({ "base_branch": "gone" })).await;
+        let task = row(&engine, task_id).await;
+        let root = get_folder_core(&engine.db, task.folder_id).await.expect("root");
+
+        let err = engine
+            .ensure_worktree(&task, &root, &WorkTaskFolderSettings::default())
+            .await
+            .err()
+            .expect("must refuse");
+        assert!(err.contains("gone"), "{err}");
+        assert!(row(&engine, task_id).await.worktree_folder_id.is_none());
+        drop(home);
     }
 
     /// A repository that HAS a proposed change: `origin` carries `main` (moved

@@ -4802,6 +4802,16 @@ const KIMI_SYNTHETIC_TOKEN_ACCESS: &str = "codeg-local-gate";
 /// kimi discard the whole model block ("Ignored invalid config … models.codeg-managed"),
 /// which leaves `default_model` dangling and every prompt ends with no reply. So we
 /// always write one, defaulting to the kimi-k2 256K window when the user leaves it blank.
+///
+/// This deliberately does NOT track `parsers::infer_context_window_max_tokens`, which
+/// puts `kimi-k3` on a 1M lane. The two answer different questions: that one reads a
+/// past session's model id to draw a gauge, while this one is the budget codeg DECLARES
+/// for a bring-your-own provider whose model is unknown — the managed block routes to
+/// any of the six interface types, so the model behind it may be GPT or Claude, not a
+/// Kimi model at all. Kimi spends the declared number rather than checking it (a live
+/// run with this default emits `llm.request.maxTokens = 262144` and
+/// `usage_update {size: 262144}`), so it is the compaction budget, not a fact about the
+/// model. Users on a bigger window raise it in the config panel.
 const KIMI_DEFAULT_MAX_CONTEXT_SIZE: i64 = 262_144;
 /// The six native provider `type` values Kimi accepts in `[providers.<name>]`.
 const KIMI_INTERFACE_TYPES: &[&str] = &[
@@ -8389,14 +8399,28 @@ pub(crate) fn skill_storage_spec(agent_type: AgentType) -> Option<SkillStorageSp
             global_dirs: vec![home_dir_or_default().join(".codebuddy").join("skills")],
             project_rel_dirs: vec![".codebuddy/skills"],
         }),
-        // Kimi Code reads skills from `<KIMI_CODE_HOME>/skills/` (default
-        // `~/.kimi-code/skills/`) and project-local `<root>/.kimi-code/skills/`.
+        // Kimi Code scans four roots, not two (`features/skill/catalog/
+        // skillRoots.ts`): a user pair of `<KIMI_CODE_HOME>/skills` +
+        // `<osHome>/.agents/skills`, and a project pair of `.kimi-code/skills`
+        // + `.agents/skills`. Note the two bases differ — the brand dir hangs
+        // off the DATA home (so `KIMI_CODE_HOME` moves it) while the shared
+        // store hangs off the OS home (so it does not), which is why only the
+        // first goes through `resolve_kimi_code_home_dir`. The kimi-native dir
+        // stays first so codeg links into Kimi's own store by default and
+        // toggling Kimi does not move a skill out from under pi/cline/codex,
+        // which share `~/.agents/skills` too.
+        //
+        // Verified live rather than read off the source: with `KIMI_CODE_HOME`
+        // pointed at an empty temp dir, `kimi acp` still advertised this
+        // machine's `~/.agents/skills` entries as `skill:<name>` in
+        // `available_commands_update`.
         AgentType::KimiCode => Some(SkillStorageSpec {
             kind: SkillStorageKind::SkillDirectoryOnly,
             global_dirs: vec![
                 crate::parsers::kimi_code::resolve_kimi_code_home_dir().join("skills"),
+                home_dir_or_default().join(".agents").join("skills"),
             ],
-            project_rel_dirs: vec![".kimi-code/skills"],
+            project_rel_dirs: vec![".kimi-code/skills", ".agents/skills"],
         }),
         // pi auto-loads skills from `~/.pi/agent/skills` and the shared
         // `~/.agents/skills` store (both global), plus project-local
@@ -8629,21 +8653,27 @@ pub(crate) fn scoped_skill_dirs(
 
 /// The directory an agent's PROJECT-relative skill dirs hang off.
 ///
-/// Normally the workspace itself. DeepSeek is the exception: its provider
-/// (`dsh-skill-filesystem`'s `findProjectRoot`) walks up from the session cwd
-/// to the nearest ancestor containing `.git` before joining `.dsh/skills` /
-/// `.agents/skills`, falling back to the cwd when it reaches the filesystem
-/// root. Opening a subdirectory of a repo as the workspace would otherwise
-/// make codeg create and list `<subdir>/.dsh/skills` — a directory the agent
-/// never scans, so the skill would simply never load, with nothing on screen
-/// saying so.
+/// Normally the workspace itself. DeepSeek and Kimi Code are the exceptions:
+/// both walk up from the session cwd to the nearest ancestor containing `.git`
+/// before joining their project-relative skill dirs, falling back to the cwd
+/// when they reach the filesystem root — DeepSeek in `dsh-skill-filesystem`'s
+/// `findProjectRoot`, Kimi in `features/skill/catalog/skillRoots.ts`'s
+/// `projectRoots` → `findUpwardRoot(workDir, ".git", exists)`. Opening a
+/// subdirectory of a repo as the workspace would otherwise make codeg create
+/// and list `<subdir>/.dsh/skills` / `<subdir>/.kimi-code/skills` — a directory
+/// the agent never scans, so the skill would simply never load, with nothing on
+/// screen saying so.
+///
+/// Kimi's half was confirmed live: `kimi acp` launched with `cwd` at
+/// `<repo>/sub` advertised the skills under `<repo>/.kimi-code/skills` and
+/// `<repo>/.agents/skills` and ignored the ones under `<repo>/sub/...`.
 ///
 /// `.git` is matched as a plain path, file or directory: in a linked worktree
-/// (which codeg creates routinely) it is a FILE, and upstream's `pathExists`
-/// accepts that too.
+/// (which codeg creates routinely) it is a FILE, and both upstreams' existence
+/// probes (`pathExists` / `stat`) accept that too.
 fn project_skill_base(agent_type: AgentType, workspace: &str) -> PathBuf {
     let workspace = PathBuf::from(workspace);
-    if agent_type != AgentType::DeepSeek {
+    if !matches!(agent_type, AgentType::DeepSeek | AgentType::KimiCode) {
         return workspace;
     }
     let mut current = workspace.as_path();
@@ -13098,9 +13128,10 @@ pub async fn acp_list_agent_skills(
     if let Some(workspace) = workspace_path.as_deref().map(str::trim) {
         if !workspace.is_empty() {
             // Same base the WRITE path resolves through `scoped_skill_dirs` —
-            // for DeepSeek that is the repo root, not the workspace. Joining
-            // onto the workspace here instead would make a skill saved from a
-            // nested workspace vanish from the list that is meant to show it.
+            // for DeepSeek and Kimi Code that is the repo root, not the
+            // workspace. Joining onto the workspace here instead would make a
+            // skill saved from a nested workspace vanish from the list that is
+            // meant to show it.
             let base = project_skill_base(agent_type, workspace);
             for relative in &spec.project_rel_dirs {
                 let project_dir = base.join(relative);
@@ -15624,10 +15655,50 @@ wire_api = "chat"
                 let spec =
                     skill_storage_spec(AgentType::KimiCode).expect("Kimi Code supports skills");
                 assert_eq!(spec.kind, SkillStorageKind::SkillDirectoryOnly);
-                assert_eq!(spec.project_rel_dirs, vec![".kimi-code/skills"]);
-                let expected =
-                    crate::parsers::kimi_code::resolve_kimi_code_home_dir().join("skills");
-                assert_eq!(spec.global_dirs, vec![expected]);
+                assert_eq!(
+                    spec.project_rel_dirs,
+                    vec![".kimi-code/skills", ".agents/skills"]
+                );
+                // Kimi-native dir first (preferred link target), shared
+                // cross-agent store second. The two hang off DIFFERENT bases:
+                // the brand dir off the data home `KIMI_CODE_HOME` moves, the
+                // shared store off the OS home it does not.
+                let expected = vec![
+                    crate::parsers::kimi_code::resolve_kimi_code_home_dir().join("skills"),
+                    home_dir_or_default().join(".agents").join("skills"),
+                ];
+                assert_eq!(spec.global_dirs, expected);
+            },
+        );
+    }
+
+    #[test]
+    fn kimi_code_skill_storage_spec_shared_store_ignores_kimi_code_home() {
+        // `KIMI_CODE_HOME` relocates Kimi's own `skills/` dir but NOT the
+        // shared `~/.agents/skills` store: upstream's `userRoots(homeDir,
+        // osHomeDir)` joins the brand dirs onto the data home and the generic
+        // dirs onto the OS home. Getting this backwards would silently point
+        // the shared column at a directory nothing reads.
+        let home = tempfile::tempdir().expect("tempdir");
+        let kimi_home = tempfile::tempdir().expect("tempdir");
+        temp_env::with_vars(
+            [
+                ("HOME", Some(home.path())),
+                ("KIMI_CODE_HOME", Some(kimi_home.path())),
+            ],
+            || {
+                let spec =
+                    skill_storage_spec(AgentType::KimiCode).expect("Kimi Code supports skills");
+                assert_eq!(
+                    spec.global_dirs[0],
+                    kimi_home.path().join("skills"),
+                    "the brand dir follows KIMI_CODE_HOME"
+                );
+                assert_eq!(
+                    spec.global_dirs[1],
+                    home_dir_or_default().join(".agents").join("skills"),
+                    "the shared store follows the OS home, not KIMI_CODE_HOME"
+                );
             },
         );
     }
@@ -15773,6 +15844,72 @@ wire_api = "chat"
                 .locations
                 .iter()
                 .any(|l| l.path == repo.join(".dsh/skills").to_string_lossy()),
+            "the listed project location must be the git root: {:?}",
+            listed.locations
+        );
+    }
+
+    #[test]
+    fn kimi_code_project_skills_hang_off_the_git_root() {
+        // Kimi's `skillRoots.projectRoots` walks up to the nearest `.git`
+        // exactly like DeepSeek's, so opening a package subdirectory must still
+        // target the repo root. Confirmed live: `kimi acp` with `cwd` at
+        // `<repo>/sub` advertised `<repo>/.kimi-code/skills` and
+        // `<repo>/.agents/skills` and ignored both `<repo>/sub` copies.
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let repo = tmp.path().join("repo");
+        let nested = repo.join("packages").join("app");
+        std::fs::create_dir_all(&nested).expect("create nested");
+        // A linked worktree records `.git` as a FILE, and upstream probes it
+        // with a bare `stat`, which accepts that — so must this.
+        std::fs::write(repo.join(".git"), "gitdir: /elsewhere\n").expect("write .git file");
+
+        let dirs = scoped_skill_dirs(
+            AgentType::KimiCode,
+            AgentSkillScope::Project,
+            Some(nested.to_str().expect("utf-8 path")),
+        )
+        .expect("project dirs");
+        assert_eq!(
+            dirs,
+            vec![repo.join(".kimi-code/skills"), repo.join(".agents/skills")]
+        );
+
+        // No `.git` anywhere above ⇒ fall back to the workspace itself, which
+        // is also what `findUpwardRoot` does when it reaches the filesystem
+        // root.
+        let bare = tmp.path().join("bare");
+        std::fs::create_dir_all(&bare).expect("create bare");
+        let fallback = scoped_skill_dirs(
+            AgentType::KimiCode,
+            AgentSkillScope::Project,
+            Some(bare.to_str().expect("utf-8 path")),
+        )
+        .expect("fallback dirs");
+        assert_eq!(fallback[0], bare.join(".kimi-code/skills"));
+
+        // The LIST path must resolve the same base as the WRITE path.
+        let saved = repo.join(".kimi-code/skills").join("demo");
+        std::fs::create_dir_all(&saved).expect("create skill dir");
+        std::fs::write(saved.join("SKILL.md"), "---\nname: demo\n---\nbody\n")
+            .expect("write SKILL.md");
+        let listed = tokio::runtime::Runtime::new()
+            .expect("runtime")
+            .block_on(acp_list_agent_skills(
+                AgentType::KimiCode,
+                Some(nested.to_string_lossy().to_string()),
+            ))
+            .expect("list skills");
+        assert!(
+            listed.skills.iter().any(|s| s.id == "demo"),
+            "skill saved at the git root must be listed from a nested workspace: {:?}",
+            listed.skills
+        );
+        assert!(
+            listed
+                .locations
+                .iter()
+                .any(|l| l.path == repo.join(".kimi-code/skills").to_string_lossy()),
             "the listed project location must be the git root: {:?}",
             listed.locations
         );

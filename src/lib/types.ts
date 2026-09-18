@@ -1605,6 +1605,12 @@ export interface WorkTaskConfig {
   mode_id?: string | null
   config_values: Record<string, string>
   label_snapshot?: AutomationLabelSnapshot | null
+  /** The branch this task is FOR: its worktree branches from that branch's tip
+   *  and the merge lands back onto it. Absent/blank = the project folder's
+   *  current branch when the task starts (and what every task created before
+   *  the choice existed does). The branch actually used is recorded on
+   *  `WorkTask.base_branch` once the worktree exists. */
+  base_branch?: string | null
 }
 
 export interface WorkTask {

@@ -28,6 +28,8 @@ use crate::acp::delegation::types::{
 };
 use crate::acp::feedback::{PendingFeedback, SessionFeedbackAccess};
 use crate::acp::question::{QuestionOutcome, SessionQuestionAccess};
+#[cfg(unix)]
+use crate::acp::scratch_dir::SUN_PATH_CAP;
 use crate::acp::chat_authoring::{AuthoringContext, AuthoringOutcome, ChatAuthoringAccess};
 use crate::acp::session_info::{SessionInfo, SessionInfoAccess};
 use crate::acp::work_task_tools::{TaskReportAck, WorkTaskToolAccess};
@@ -197,18 +199,87 @@ impl DelegationListener {
     /// healthy socket would have been destroyed to no purpose, by the very
     /// action meant to repair it.
     ///
-    /// No fallback to unlink-then-bind on failure, deliberately: the staged
-    /// path is shorter than the real one (so `sun_path` limits can't reject it
-    /// selectively) and every remaining failure reason — EMFILE, ENOSPC, a
-    /// read-only directory — applies to both, so a fallback would only
-    /// reintroduce the destructive window in exactly the conditions that
+    /// No fallback to unlink-then-bind on failure, deliberately: BOTH paths are
+    /// checked against [`SUN_PATH_CAP`] below (so a length limit cannot reject
+    /// one and admit the other) and every remaining failure reason — EMFILE,
+    /// ENOSPC, a read-only directory — applies to both, so a fallback would
+    /// only reintroduce the destructive window in exactly the conditions that
     /// triggered it.
+    ///
+    /// # Why the lengths are checked here, before anything else
+    ///
+    /// `bind(2)` enforces [`SUN_PATH_CAP`] but `rename(2)` does not — it is a
+    /// plain directory operation with only `PATH_MAX` to answer to. So an
+    /// over-long `socket_path` used to sail through this function: the staged
+    /// name bound fine, the rename published it at a path no `connect(2)` on
+    /// the system could ever name, and this returned `Ok`. The caller then
+    /// reported a healthy service — `task_alive`, no `last_error`, a status
+    /// indicator lit green — while every companion process was unable to reach
+    /// it. A silent total failure, produced by the safety mechanism.
+    ///
+    /// Refusing up front converts that into a loud error, and doing it BEFORE
+    /// the first filesystem call is what keeps the paragraph above true: there
+    /// is no staged entry, no `create_dir_all`, and above all no chance of
+    /// disturbing an incumbent socket that is still serving this path.
+    ///
+    /// The staged path is measured too rather than assumed shorter. It usually
+    /// is — `.stg-<pid>-<8 hex>` is 8 bytes under `codeg-delegation-<pid>.sock`
+    /// — but that holds only for names at least as long as the staged one, and
+    /// a caller passing a SHORT name in a deep directory would otherwise clear
+    /// this check and then fail the real `bind` on the staged path instead.
     #[cfg(unix)]
     pub async fn bind(socket_path: &Path) -> std::io::Result<BoundSocket> {
-        if let Some(parent) = socket_path.parent() {
-            let _ = tokio::fs::create_dir_all(parent).await;
-        }
         let staging = Self::staging_socket_path(socket_path);
+        // Pure: `staging_socket_path` only reshapes the name, so both operands
+        // exist before this function has touched the filesystem at all.
+        for path in [socket_path, staging.as_path()] {
+            if !fits_sun_path(path) {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::InvalidInput,
+                    format!(
+                        "socket path is {} bytes; AF_UNIX addresses cap at {} here. \
+                         A `rename` onto this path would succeed and publish a socket \
+                         nothing could connect to, so it is refused instead. Point \
+                         TMPDIR at a shorter directory: {}",
+                        path.as_os_str().len(),
+                        SUN_PATH_CAP - 1,
+                        path.display(),
+                    ),
+                ));
+            }
+        }
+        if let Some(parent) = socket_path.parent() {
+            // Compared as WRITTEN, not resolved: `default_socket_path` builds
+            // the fallback by joining onto `short_socket_dir()`, so the two
+            // spellings are byte-identical. Anything that canonicalized the
+            // path upstream would take the other branch — on macOS `/tmp` is a
+            // symlink to `/private/tmp` — and silently lose the guard below, so
+            // keep this function's input un-normalized.
+            if parent == short_socket_dir() {
+                // Our own fallback directory, and it lives in a `1777` /tmp: it
+                // can be waiting for us as another account's directory or as a
+                // symlink aimed elsewhere. `create_root` creates it `0700` and
+                // refuses both, and unlike the branch below its error is
+                // PROPAGATED — a squatted directory must fail the bind, not
+                // quietly host our socket.
+                //
+                // Re-worded on the way out: `create_root` says "scratch root",
+                // which is the wrong noun for a broker socket and would send
+                // whoever reads it off the status indicator into the wrong
+                // subsystem.
+                crate::acp::scratch_dir::create_root(parent).map_err(|e| {
+                    std::io::Error::new(
+                        e.kind(),
+                        format!(
+                            "cannot use {} for the delegation socket: {e}",
+                            parent.display()
+                        ),
+                    )
+                })?;
+            } else {
+                let _ = tokio::fs::create_dir_all(parent).await;
+            }
+        }
         // Clear a leftover from a bind that died between these two steps.
         let _ = tokio::fs::remove_file(&staging).await;
         let listener = tokio::net::UnixListener::bind(&staging)?;
@@ -989,16 +1060,83 @@ fn parse_agent_type(raw: &str) -> Option<AgentType> {
     serde_json::from_value(serde_json::Value::String(raw.to_string())).ok()
 }
 
+/// Whether `path` fits in `sockaddr_un::sun_path`.
+///
+/// STRICTLY less than the cap: the array has to hold the terminating NUL too,
+/// so its last byte is never available to the path. Same rule, and the same
+/// constant, as [`crate::acp::scratch_dir`] applies to the temp directory it
+/// hands a child — this is codeg's own end of the identical budget.
+#[cfg(unix)]
+fn fits_sun_path(path: &Path) -> bool {
+    path.as_os_str().len() < SUN_PATH_CAP
+}
+
+/// Short fallback directory for the broker socket, used when the ambient temp
+/// directory is too long to hold one.
+///
+/// `/tmp` because it is the shortest directory POSIX guarantees exists, and
+/// euid-scoped for the reason [`crate::acp::scratch_dir`] gives for its own
+/// twin: `/tmp` is shared with every other account on the machine, so an
+/// unscoped name would be owned by whichever user ran codeg first and
+/// uncreatable by all the rest. [`DelegationListener::bind`] creates it `0700`,
+/// keeping the socket as private as it was in the per-user `$TMPDIR` this
+/// stands in for.
+///
+/// Deliberately NOT the scratch root. That directory is swept — entries are
+/// enumerated and deleted by pid — and a long-lived socket has no business
+/// sharing a namespace whose invariant is "everything here is disposable".
+///
+/// The cost of staying out of it: nothing reclaims this directory either, so a
+/// process that dies without unlinking leaves one dead `.sock` inode behind
+/// until the OS temp reaper gets to it. That is not a regression — the primary
+/// `$TMPDIR/codeg-delegation-<pid>.sock` has always had exactly the same
+/// property, and a stale entry is inert (pid-scoped, never consulted, replaced
+/// by `rename` if the pid is ever recycled). Worth knowing before anyone adds a
+/// sweep: it would need to cover BOTH locations or it would just move the leak.
+#[cfg(unix)]
+fn short_socket_dir() -> PathBuf {
+    PathBuf::from(format!(
+        "/tmp/codeg-{}",
+        // Always succeeds; `geteuid` has no failure mode.
+        unsafe { libc::geteuid() }
+    ))
+}
+
 /// Default socket path for the running process, scoped to PID so multiple
 /// codeg instances on the same machine don't collide.
 ///
-/// Unix: a `.sock` file inside `temp_dir`.
+/// Unix: a `.sock` file inside `temp_dir`, or — when that would not fit in
+/// `sun_path` — inside [`short_socket_dir`]. The fallback is not hypothetical
+/// housekeeping: codeg exports a ~72-byte per-session `TMPDIR` to the agents it
+/// launches, so a codeg started from inside one is already within a few bytes
+/// of the macOS cap, and a container or a hand-set `TMPDIR` clears it outright.
+/// Without the fallback that produced a socket nobody could dial and no error
+/// anywhere — see [`DelegationListener::bind`].
+///
 /// Windows: a named pipe address `\\.\pipe\codeg-delegation-<pid>`. Windows
 /// named pipes live in their own kernel namespace and ignore `temp_dir`; the
 /// argument is kept for signature parity across platforms.
 #[cfg(unix)]
 pub fn default_socket_path(temp_dir: &Path) -> PathBuf {
-    temp_dir.join(format!("codeg-delegation-{}.sock", std::process::id()))
+    let name = format!("codeg-delegation-{}.sock", std::process::id());
+    let preferred = temp_dir.join(&name);
+    if fits_sun_path(&preferred) {
+        return preferred;
+    }
+    // No third candidate, because there is no third case to handle: this is
+    // `/tmp/codeg-` + at most 10 digits of euid + `/codeg-delegation-` + at
+    // most 10 digits of pid + `.sock` — 54 bytes at its absolute widest, or
+    // half the smallest `sun_path` any of these platforms has.
+    let short = short_socket_dir().join(&name);
+    tracing::info!(
+        "[delegation] {} is {} bytes, past the {}-byte AF_UNIX limit; \
+         binding {} instead",
+        preferred.display(),
+        preferred.as_os_str().len(),
+        SUN_PATH_CAP - 1,
+        short.display(),
+    );
+    short
 }
 
 #[cfg(windows)]
@@ -2615,4 +2753,115 @@ mod tests {
         assert!(questions.registered.lock().await.is_empty());
     }
 
+    /// The fallback fires only when it has to. A temp directory short enough
+    /// to hold a socket keeps the socket where the user's `TMPDIR` points,
+    /// which is every ordinary desktop launch.
+    #[cfg(unix)]
+    #[test]
+    fn a_short_temp_dir_is_used_directly() {
+        let path = default_socket_path(Path::new("/tmp"));
+        assert_eq!(path.parent(), Some(Path::new("/tmp")));
+    }
+
+    /// ...and an over-long one moves to the short directory rather than
+    /// composing a path no `connect(2)` could name.
+    #[cfg(unix)]
+    #[test]
+    fn an_over_long_temp_dir_falls_back_to_the_short_socket_dir() {
+        let name = format!("codeg-delegation-{}.sock", std::process::id());
+        // A macOS `/var/folders/…/T` with codeg's own per-session nesting under
+        // it — the shape that actually produces this — padded so the composed
+        // path lands exactly ONE byte past what `sun_path` can hold. Sized from
+        // the cap rather than hard-coded, so it keeps straddling the boundary
+        // if either side of it moves.
+        let prefix = "/var/folders/hl/";
+        let suffix = "/T/codeg-acp/12345-deadbeef";
+        let pad = SUN_PATH_CAP - 1 - name.len() - prefix.len() - suffix.len();
+        let ambient = PathBuf::from(format!("{prefix}{}{suffix}", "z".repeat(pad)));
+        assert_eq!(ambient.as_os_str().len() + 1 + name.len(), SUN_PATH_CAP);
+        assert!(!fits_sun_path(&ambient.join(&name)));
+
+        let path = default_socket_path(&ambient);
+        assert_eq!(path.parent(), Some(short_socket_dir().as_path()));
+        assert_eq!(path.file_name(), Some(std::ffi::OsStr::new(&name)));
+        assert!(
+            fits_sun_path(&path),
+            "the fallback must fit: {} is {} bytes",
+            path.display(),
+            path.as_os_str().len()
+        );
+    }
+
+    /// The STAGED path is measured too, not assumed shorter than the real one.
+    ///
+    /// `.stg-<pid>-<8 hex>` is shorter than `codeg-delegation-<pid>.sock`, which
+    /// is why production never noticed, but it is longer than a short name — so
+    /// a short name in a deep directory fits `sun_path` while the path `bind`
+    /// actually hands the kernel does not. Refusing both together is what makes
+    /// the docstring's "a length limit cannot reject one and admit the other"
+    /// true, and with it the case for having no unlink-then-bind fallback.
+    ///
+    /// Note what this must NOT lean on: the kernel refuses the over-long staged
+    /// path by itself, with the same `InvalidInput` kind. Asserting only that
+    /// `bind` errs would pass with the staged check deleted (verified by
+    /// mutation). The discriminating observable is that NOTHING is touched —
+    /// the un-created parent directory stays un-created.
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn a_staged_path_too_long_for_sun_path_is_refused_too() {
+        let holder = tempfile::tempdir_in("/tmp").unwrap();
+        // Deep enough that `a.sock` still fits and `.stg-…` cannot. Left
+        // UNCREATED on purpose — see above.
+        let pad = SUN_PATH_CAP - 8 - holder.path().as_os_str().len() - 1;
+        let dir = holder.path().join("x".repeat(pad));
+        let socket = dir.join("a.sock");
+        assert!(
+            fits_sun_path(&socket),
+            "the real path must fit, or this tests the wrong check"
+        );
+        assert!(!fits_sun_path(&DelegationListener::staging_socket_path(&socket)));
+
+        let err = DelegationListener::bind(&socket).await.unwrap_err();
+        assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
+        assert!(
+            err.to_string().contains("AF_UNIX"),
+            "refused by us, not by the kernel after the fact: {err}"
+        );
+        assert!(
+            !dir.exists(),
+            "bind touched the filesystem before refusing: {} was created",
+            dir.display()
+        );
+        assert!(!socket.exists());
+    }
+
+    /// The end-to-end claim, asserted against the KERNEL rather than against
+    /// [`fits_sun_path`]'s own opinion of itself: what broke was a socket that
+    /// could not be DIALED, so drive the whole path — choose, bind, connect.
+    ///
+    /// The ambient directory handed in here does not exist. That is deliberate:
+    /// the fallback must not need it to.
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn the_chosen_socket_path_can_actually_be_bound_and_dialed() {
+        let ambient = PathBuf::from(format!(
+            "/var/folders/hl/{}/T/codeg-acp/12345-deadbeef",
+            "z".repeat(60)
+        ));
+        let path = default_socket_path(&ambient);
+
+        let bound = DelegationListener::bind(&path).await.expect("bind");
+        // No `accept` needed: a connect lands in the listener's backlog.
+        let dialed = tokio::net::UnixStream::connect(&path).await;
+        drop(bound);
+        let _ = std::fs::remove_file(&path);
+
+        assert!(
+            dialed.is_ok(),
+            "nothing could dial {} ({} bytes): {:?}",
+            path.display(),
+            path.as_os_str().len(),
+            dialed.err()
+        );
+    }
 }

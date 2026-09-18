@@ -249,6 +249,8 @@
     "appLanguage": "앱 언어",
     "languageSaveSuccess": "언어 설정이 저장되었습니다",
     "languageSaveFailed": "언어 설정 저장 실패: {message}",
+    "dataTitle": "데이터 및 동기화",
+    "dataDescription": "「설정 동기화」는 설정을 기기 사이로 옮기고, 「백업」은 이 기기의 codeg 데이터 전체를 묶습니다.",
     "updateTitle": "앱 업데이트",
     "versionTitle": "소프트웨어 업데이트",
     "updateDescription": "설정된 릴리스 소스에서 새 버전을 확인하고 가능하면 바로 설치합니다.",
@@ -3045,6 +3047,8 @@
         "tasks": {
           "connectingTitle": "{agent}에 연결 중",
           "connectingDescription": "연결을 설정하는 중",
+          "preparingTitle": "{agent} 세션 준비 중",
+          "preparingDescription": "대화 기록을 읽는 중",
           "loadingSelectorsTitle": "{agent} 선택자 불러오는 중",
           "loadingSelectorsDescription": "모드 및 세션 구성 옵션을 가져오는 중",
           "initSessionTitle": "{agent} 세션 초기화 중",
@@ -3138,7 +3142,9 @@
         "saveEdit": "저장",
         "cancelEdit": "편집 취소",
         "editItem": "편집",
-        "deleteItem": "삭제"
+        "deleteItem": "삭제",
+        "steerItemNow": "현재 턴에 삽입",
+        "steerItemAsNote": "메모로 보내 다음 점검 때 읽도록 함"
       },
       "welcomeInputPanel": {
         "agentsSettingsPath": "설정 > 에이전트",
@@ -4640,14 +4646,20 @@
     "errorLoadingDir": "디렉토리 로드 실패",
     "selectedCount": "{count}개 선택됨"
   },
+  "BranchPicker": {
+    "searchPlaceholder": "브랜치 검색…",
+    "none": "브랜치 없음",
+    "local": "로컬",
+    "remote": "원격",
+    "useCustom": "\"{query}\" 사용"
+  },
   "BackupSettings": {
-    "title": "백업 및 복원",
-    "description": "codeg 데이터의 이동 가능한 백업을 내보내거나 백업에서 복원합니다.",
     "tabs": {
       "backup": "백업",
       "restore": "복원"
     },
     "export": {
+      "description": "이 기기의 codeg 데이터(데이터베이스와 업로드한 파일)를 하나의 아카이브로 묶습니다.",
       "includeExternal": "대화 내용 포함",
       "includeExternalHint": "각 CLI의 대화 기록(Claude, Codex, Gemini 등)도 함께 보관합니다. 용량이 커집니다.",
       "passphrase": "암호문 (선택)",
@@ -4670,6 +4682,7 @@
       }
     },
     "restore": {
+      "description": "이 기기의 codeg 데이터를 백업 아카이브의 내용으로 바꿉니다.",
       "selectFile": "백업 파일 선택",
       "passphrasePrompt": "이 백업은 암호화되어 있습니다. 암호문을 입력하세요.",
       "unlock": "잠금 해제",
@@ -4737,6 +4750,105 @@
       "rollbackConfirmBody": "현재 데이터를 이 스냅샷으로 바꾸고 재시작합니다. 교체되는 데이터는 먼저 스냅샷으로 보관됩니다."
     }
   },
+  "ConfigSyncSettings": {
+    "title": "설정 동기화",
+    "scopeTitle": "동기화 범위",
+    "scopeIncludedTitle": "포함됨",
+    "scopeExcludedTitle": "포함되지 않음",
+    "scopeIncluded": {
+      "providers": "모델 공급업체(API 키 포함)",
+      "agentSettings": "에이전트 설정",
+      "customAgents": "사용자 지정 에이전트",
+      "quickMessages": "빠른 메시지",
+      "taskTemplates": "작업 템플릿",
+      "preferences": "앱 기본 설정(언어, 테마, 토글)"
+    },
+    "scopeExcluded": {
+      "conversations": "대화 기록",
+      "uploads": "업로드한 파일과 이미지",
+      "workspaces": "워크스페이스 프로젝트와 경로",
+      "mcp": "MCP 서버(각 CLI가 관리)",
+      "credentials": "로그인 자격 증명과 토큰"
+    },
+    "fileTitle": "설정 파일",
+    "exportButton": "파일로 내보내기",
+    "importButton": "파일에서 가져오기",
+    "fileHint": "다른 기기로 옮길 수 있는 JSON 파일 하나를 만듭니다. 가져올 때는 항목을 추가하거나 업데이트하며, 파일에 없는 기존 항목은 그대로 남습니다.",
+    "webdavTitle": "WebDAV 동기화",
+    "webdavHint": "설정 스냅샷을 직접 운영하는 WebDAV 서버에 업로드합니다.",
+    "presetLabel": "서버",
+    "preset": {
+      "jianguoyun": "Jianguoyun",
+      "nextcloud": "Nextcloud",
+      "synology": "Synology NAS",
+      "custom": "사용자 지정"
+    },
+    "presetHint": {
+      "jianguoyun": "Jianguoyun은 로그인 비밀번호가 아니라 보안 설정에서 만든 앱 비밀번호가 필요합니다.",
+      "nextcloud": "도메인과 사용자 이름을 바꾸고 「설정 → 보안」의 앱 비밀번호를 사용하세요.",
+      "synology": "DSM 패키지 센터에서 WebDAV Server를 활성화하세요. 기본 포트는 5005(HTTP) / 5006(HTTPS)입니다."
+    },
+    "serverUrl": "서버 URL",
+    "username": "사용자 이름",
+    "password": "비밀번호",
+    "passwordKeep": "비워 두면 저장된 비밀번호를 유지합니다",
+    "passwordPlaceholder": "앱 비밀번호",
+    "remoteDir": "원격 폴더",
+    "profile": "프로필",
+    "profileHint": "같은 프로필을 쓰는 기기는 하나의 설정을 공유합니다. 업무용과 개인용을 나누려면 프로필을 다르게 지정하세요.",
+    "autoSyncLabel": "자동 업로드",
+    "autoSyncHint": "주기적으로 확인하고 설정이 바뀜을 때만 업로드합니다.",
+    "intervalLabel": "확인 주기",
+    "intervalOption": "{minutes}분마다",
+    "saveButton": "저장",
+    "testButton": "연결 테스트",
+    "uploadButton": "지금 동기화",
+    "restoreButton": "원격에서 복원",
+    "saved": "동기화 설정을 저장했습니다",
+    "testSucceeded": "WebDAV 서버에 연결되었습니다",
+    "uploaded": "설정을 업로드했습니다",
+    "exported": "설정을 내보냈습니다",
+    "restored": "설정 {count}건을 적용했습니다",
+    "imported": "설정 {count}건을 적용했습니다",
+    "noRemoteSnapshot": "서버에 아직 설정 스냅샷이 없습니다",
+    "lastSyncAt": "마지막 동기화: {time}",
+    "neverSynced": "아직 동기화하지 않았습니다",
+    "lastError": "마지막 오류: {message}",
+    "working": "처리 중…",
+    "plaintextWarning": "스냅샷은 암호화되지 않은 상태로 업로드되며 API 키를 포함합니다. 본인만 접근할 수 있는 WebDAV 서버를 사용하세요. 동기화 자격 증명 자체는 스냅샷에 포함되지 않습니다.",
+    "importConfirmTitle": "설정을 가져올까요?",
+    "importConfirmBody": "파일의 항목이 이 기기에 추가되거나 업데이트됩니다. 파일에 없는 기존 항목은 유지됩니다.",
+    "restartHint": "모양, 언어, 공급자 목록 등 일부 변경 사항은 codeg를 다시 시작한 뒤에 적용됩니다.",
+    "importConfirmAction": "가져오기",
+    "restoreConfirmTitle": "원격에서 복원할까요?",
+    "restoreConfirmBody": "{device}에서 {time}에 만든 스냅샷을 이 기기에 적용합니다. 스냅샷에 없는 기존 항목은 유지됩니다.",
+    "restoreConfirmAction": "복원",
+    "cancel": "취소",
+    "emptySnapshot": "이 스냅샷에는 설정 항목이 없습니다.",
+    "domain": {
+      "modelProviders": "모델 공급자 {count}개",
+      "agentSettings": "에이전트 설정 {count}개",
+      "customAgents": "사용자 에이전트 {count}개",
+      "quickMessages": "빠른 메시지 {count}개",
+      "taskTemplates": "작업 템플릿 {count}개",
+      "preferences": "앱 환경설정 {count}개"
+    },
+    "rollbackTitle": "가져오기 되돌리기",
+    "rollbackHint": "가져오기와 복원을 할 때마다 직전의 이 기기 설정을 저장합니다. 최근 10개가 남습니다.",
+    "rollbackAction": "되돌리기",
+    "rollbackUnknownTime": "시간 불명",
+    "rollbackConfirmTitle": "이 설정으로 되돌릴까요?",
+    "rollbackConfirmBody": "현재 설정을 {time}에 저장된 사본으로 바꿉니다. 현재 설정을 먼저 저장하므로 이 작업도 되돌릴 수 있습니다.",
+    "rollbackConfirmAction": "되돌리기",
+    "rolledBack": "{count}개 항목을 복원했습니다",
+    "encryptLabel": "스냅샷 암호화",
+    "encryptHint": "업로드하는 파일을 암호구로 보호합니다. 동기화하는 모든 기기에 같은 암호구가 필요합니다.",
+    "encryptedNotice": "스냅샷은 업로드 전에 암호구로 암호화됩니다. 암호구를 잃어버리면 서버의 사본은 복구할 수 없습니다.",
+    "passphrase": "암호구",
+    "passphraseKeep": "비워 두면 저장된 암호구를 사용합니다",
+    "passphrasePlaceholder": "암호화 암호구",
+    "passphraseHint": "이 기기의 키체인에만 저장되며 업로드되지 않습니다. 다른 기기에도 같은 암호구를 입력하세요."
+  },
   "backup": {
     "restore": {
       "error": {
@@ -4750,6 +4862,27 @@
     "error": {
       "diskSpace": "작업을 완료할 디스크 공간이 부족합니다.",
       "cancelled": "작업이 취소되었습니다."
+    }
+  },
+  "configSync": {
+    "error": {
+      "newerSchema": "이 스냅샷은 더 새로운 버전의 codeg(형식 {snapshotVersion})에서 만들었습니다. 현재 버전은 형식 {appVersion}까지 지원합니다.",
+      "checksum": "스냅샷이 체크섬과 일치하지 않아 손상되었을 수 있습니다.",
+      "invalidSnapshot": "이 파일은 유효한 codeg 설정 스냅샷이 아닙니다.",
+      "noRemoteSnapshot": "서버에 아직 설정 스냅샷이 없습니다.",
+      "notConfigured": "동기화하기 전에 WebDAV 서버를 설정하세요.",
+      "unauthorized": "WebDAV 서버가 사용자 이름 또는 비밀번호를 거부했습니다.",
+      "forbidden": "WebDAV 서버가 이 폴더에 대한 접근을 거부했습니다.",
+      "remotePath": "원격 폴더 또는 프로필 이름이 올바르지 않습니다.",
+      "quota": "WebDAV 서버에 남은 공간이 없습니다.",
+      "network": "WebDAV 서버에 연결할 수 없습니다.",
+      "server": "WebDAV 서버가 오류를 반환했습니다({status}).",
+      "passphraseRequired": "이 스냅샷은 암호화되어 있습니다. 동기화하기 전에 암호화 암호구를 설정하세요.",
+      "badPassphrase": "스냅샷을 복호화하지 못했습니다. 암호구를 확인하세요. 파일이 손상되었을 수도 있습니다.",
+      "badDomain": "이 스냅샷의 {domain} 부분을 읽지 못했습니다.",
+      "noRollback": "저장된 그 설정은 이 기기에 더 이상 없습니다.",
+      "credentialsUnreadable": "저장된 자격 증명을 읽지 못했습니다. 시스템 키체인을 잠금 해제한 후 다시 시도하세요.",
+      "notEncrypted": "서버의 스냅샷은 암호화되어 있지 않지만 이 기기에서는 암호화가 켜져 있습니다. 이 기기에서 업로드해 교체하거나 암호화를 끄고 사용하세요."
     }
   },
   "WebConnection": {
@@ -5034,12 +5167,7 @@
     "cronApply": "적용",
     "cronPreviewLabel": "미리 보기",
     "cronOpenBuilder": "일정 빌더 열기",
-    "branchDefault": "기본 브랜치",
-    "branchUseCustom": "\"{query}\" 사용",
-    "branchLocal": "로컬",
-    "branchRemote": "원격",
-    "branchSearchPlaceholder": "브랜치 검색…",
-    "branchNone": "브랜치 없음"
+    "branchDefault": "기본 브랜치"
   },
   "Tasks": {
     "title": "할 일",
@@ -5170,6 +5298,10 @@
     "promptLabel": "작업 설명",
     "promptPlaceholder": "에이전트에게 작업을 설명하세요 — @로 파일 참조, /로 명령",
     "folderPlaceholder": "폴더 선택",
+    "baseBranch": "기준 브랜치",
+    "baseBranchPlaceholder": "현재 브랜치",
+    "baseBranchDefault": "작업이 시작될 때의 현재 브랜치",
+    "baseBranchHint": "작업은 이 브랜치에서 갈라져 나오고, 병합도 이 브랜치로 돌아갑니다.",
     "agentInheritedHint": "작업 설정에서 상속됨 — 변경하면 이 작업에만 적용됩니다",
     "agentOverrideReset": "상속으로 되돌리기",
     "sectionTarget": "대상",
